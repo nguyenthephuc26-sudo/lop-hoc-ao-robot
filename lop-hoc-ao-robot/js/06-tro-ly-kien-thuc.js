@@ -1,0 +1,95 @@
+/* Trợ lý chat: chuẩn hóa câu hỏi tiếng Việt, đọc số, và bộ 38 câu hỏi hay gặp chương 1–6 kèm câu trả lời. */
+
+/* ================= TRỢ LÝ CHAT (Cách A: chạy hoàn toàn trong trình duyệt) ================= */
+function norm(t){return t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/\s+/g,' ').trim();}
+function nums(t){
+  let s=t.replace(/[⁰¹²³₀₁₂₃]/g,' ');
+  if(s.includes('.')){}                                   // 0.3, 0.2, 0.5  → dấu phẩy là phân cách
+  else if(s.includes(';'))s=s.replace(/(\d),(\d)/g,'$1.$2'); // 0,3; 0,2; 0,5 → dấu phẩy là thập phân
+  else if(/\d,\d+\s+-?\d/.test(s)||/^[^\d]*-?\d+,\d+[^\d,]*$/.test(s))s=s.replace(/(\d),(\d)/g,'$1.$2'); // 0,3 0,2 0,5
+  return (s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
+}
+function symMat(rows){return '<div class="mat"><table>'+rows.map((r,i)=>'<tr>'+r.map((c,j)=>`<td class="${i<3&&j<3?'r':(i<3&&j===3?'p':'')}">${c}</td>`).join('')+'</tr>').join('')+'</table></div>';}
+function m3(rows){return '<div class="mat"><table>'+rows.map(r=>'<tr>'+r.map(c=>`<td class="r">${c}</td>`).join('')+'</tr>').join('')+'</table></div>';}
+
+const KB=[
+ {q:'Robot là gì?',k:['robot la gi','dinh nghia robot','robot cong nghiep la gi','the nao la robot'],
+  a:'Robot là một tay máy <b>đa chức năng, lập trình lại được</b>, di chuyển vật liệu, chi tiết hay dụng cụ theo các chuyển động được lập trình, và có cảm biến để <b>thu nhận thông tin từ môi trường</b> rồi phản ứng lại (định nghĩa của Viện Robot Hoa Kỳ RIA).'},
+ {q:'Robot khác máy tự động thông thường ở chỗ nào?',k:['khac may tu dong','may tu dong','khac gi may','khac voi may'],
+  a:'Máy tự động chỉ làm một việc cố định, ví dụ máy dập hay băng tải. Robot thì <b>đổi việc bằng cách đổi chương trình</b>, cùng một robot có thể hàn, sơn, gắp chỉ cần thay dụng cụ, quỹ đạo thay đổi được, và có cảm biến để phản ứng theo tình huống.'},
+ {q:'Bậc tự do (DOF) là gì?',k:['bac tu do','dof','degree of freedom','may bac'],
+  a:'Bậc tự do là số đại lượng độc lập cần biết để xác định tư thế của robot. Với chuỗi hở thì <b>số bậc tự do = số khớp</b>, vì mỗi khớp quay hay tịnh tiến góp đúng 1 bậc. Robot trong lớp học ảo có 3 khớp quay nên có <b>3 DOF</b>.'},
+ {q:'Vì sao robot công nghiệp thường có 6 bậc tự do?',k:['6 bac','sau bac','6 truc','6 khop','6 dof'],
+  a:'Vì một vật rắn trong không gian có 6 bậc tự do: <b>3 cho vị trí</b> (x, y, z) và <b>3 cho hướng</b>. Muốn đặt dụng cụ ở vị trí và hướng bất kỳ thì cần ít nhất 6 khớp, thường là 3 khớp cánh tay lo vị trí và 3 khớp cổ tay lo hướng.'},
+ {q:'Không gian làm việc là gì?',k:['khong gian lam viec','vung lam viec','workspace','tam voi'],
+  a:'Là vùng mà đầu tay robot với tới được. Nó phụ thuộc chiều dài các khâu, loại khớp và giới hạn góc khớp. Với robot trong lớp học ảo, khoảng cách từ vai tới điểm đích phải nằm trong <b>[|a₂ − a₃|; a₂ + a₃] = [0,1; 0,7] m</b>.'},
+ {q:'Có những kiểu cấu hình tay máy nào?',k:['cau hinh tay may','kieu tay may','loai robot','phan loai','cartesian','descartes','robot tru','robot cau','5 kieu','nam kieu'],
+  a:'Phân loại theo 3 khớp đầu tiên:<ul><li><b>Descartes PPP</b>: workspace hình hộp, dùng cho CNC, in 3D.</li><li><b>Trụ RPP</b>: workspace trụ rỗng.</li><li><b>Cầu RRP</b>: một phần cầu rỗng.</li><li><b>SCARA RRP</b> với các trục song song: lắp ráp điện tử.</li><li><b>Dạng người RRR</b>: linh hoạt nhất, phổ biến nhất, chính là robot trong lớp học ảo.</li></ul>'},
+ {q:'Robot SCARA là gì?',k:['scara'],
+  a:'SCARA (Selective Compliance Assembly Robot Arm) có 2 khớp quay và 1 khớp tịnh tiến, <b>tất cả các trục song song</b> và thường thẳng đứng. Robot cứng theo phương đứng, hơi mềm theo phương ngang nên rất hợp cắm linh kiện xuống lỗ. Robot nhanh, chính xác, phổ biến trong lắp ráp điện tử. Robot có 4 DOF nếu thêm khớp xoay dụng cụ.'},
+ {q:'Khớp quay và khớp tịnh tiến khác nhau thế nào?',k:['khop quay','khop tinh tien','revolute','prismatic','loai khop'],
+  a:'<b>Khớp quay (R)</b>: hai khâu xoay quanh một trục, biến khớp là góc θ (như khuỷu tay). <b>Khớp tịnh tiến (P)</b>: một khâu trượt thẳng, biến khớp là độ dài d (như ngăn kéo). Trong bảng D-H: khớp quay thì θ là biến, khớp tịnh tiến thì d là biến.'},
+ {q:'Khâu tác động cuối là gì?',k:['khau tac dong cuoi','end effector','end-effector','dau tay','tay kep'],
+  a:'Là bộ phận ở đầu cùng của tay máy, trực tiếp làm việc: tay kẹp, mỏ hàn, súng sơn, giác hút… Cánh tay đưa nó tới đúng vị trí, cổ tay xoay nó về đúng hướng.'},
+ {q:'Encoder là gì?',k:['encoder','bo ma hoa','do goc khop','cam bien vi tri'],
+  a:'Encoder là cảm biến đo góc quay của khớp, phổ biến nhất trong robot.<ul><li><b>Encoder tuyệt đối</b>: đĩa có nhiều rãnh mã, bật máy là biết ngay vị trí, giữ được vị trí khi mất điện.</li><li><b>Encoder tương đối</b>: các kênh A, B, Z, rẻ hơn nhưng phải về gốc (homing) mỗi lần bật máy. Kênh A, B lệch pha cho biết chiều quay.</li></ul>Encoder gắn ở trục động cơ trước hộp số n thì độ phân giải ở khớp tốt hơn n lần.'},
+ {q:'Cảm biến nội và cảm biến ngoại khác nhau thế nào?',k:['cam bien noi','cam bien ngoai','loai cam bien','cam bien luc','camera'],
+  a:'<b>Cảm biến nội</b> đo trạng thái bên trong robot: góc, vận tốc khớp (encoder). <b>Cảm biến ngoại</b> đo môi trường: lực/mômen (strain gauge), khoảng cách (siêu âm, laser), hình ảnh (camera).'},
+ {q:'Độ chính xác và độ lặp lại khác nhau thế nào?',k:['do chinh xac','do lap lai','repeatability','accuracy'],
+  a:'<b>Độ chính xác</b>: robot tới gần điểm cần tới đến mức nào. <b>Độ lặp lại</b>: quay lại cùng một điểm nhiều lần thì các lần giống nhau đến mức nào. Robot có thể lặp lại rất tốt nhưng vẫn lệch tâm. Hiệu chuẩn giúp tăng độ chính xác, linh kiện tốt giúp tăng độ lặp lại.'},
+ {q:'Vì sao robot cần hộp số?',k:['hop so','bo truyen','ti so truyen','ty so truyen','giam toc'],
+  a:'Động cơ điện quay nhanh nhưng mômen nhỏ, còn khớp robot cần quay chậm với mômen lớn. Hộp số tỉ số n đổi lại: <b>ω<sub>khớp</sub> = ω<sub>động cơ</sub>/n, τ<sub>khớp</sub> = n·τ<sub>động cơ</sub></b>. Ví dụ động cơ 3000 rpm, 0,5 N·m qua hộp số n = 100 cho khớp 30 rpm, 50 N·m.'},
+ {q:'Backlash và harmonic drive là gì?',k:['backlash','khe ho','harmonic','harmonic drive'],
+  a:'<b>Backlash</b> là khe hở giữa hai bánh răng: khi đảo chiều, động cơ quay "chạy không" một góc nhỏ nên khâu bị trễ và sai vị trí. <b>Harmonic drive</b> là bộ truyền gọn, đồng trục, tỉ số rất lớn và gần như không có backlash, nên rất được ưa chuộng trong robot công nghiệp.'},
+ {q:'Chọn tỉ số truyền tối ưu thế nào?',k:['ti so truyen toi uu','ty so truyen toi uu','phoi hop quan tinh','inertia matching'],
+  a:'Mômen động cơ cần để tăng tốc: τ<sub>m</sub> = (J<sub>m</sub>·n + J<sub>l</sub>/n)·a. Nhỏ nhất khi <b>n = √(J<sub>l</sub>/J<sub>m</sub>)</b>, tức là quán tính tải quy về trục động cơ bằng quán tính rôto. Ví dụ J<sub>m</sub> = 10⁻⁴, J<sub>l</sub> = 1 kg·m² thì n = 100.'},
+ {q:'Robot dùng loại động cơ nào?',k:['dong co','servo','khi nen','thuy luc','dong co dien'],
+  a:'Phổ biến nhất là <b>động cơ điện AC servo</b>: dễ điều khiển, hiệu suất cao, gọn nhẹ. Thủy lực cho mômen lớn nhưng cồng kềnh, rò dầu. Khí nén rẻ nhưng khó điều khiển chính xác, chỉ dùng cho tay kẹp, giác hút. "Servo" nghĩa là điều khiển vòng kín, có cảm biến đo vị trí để tự chỉnh.'},
+ {q:'Ma trận quay là gì?',k:['ma tran quay','rotation matrix','mo ta huong','ma tran r'],
+  a:'Ma trận quay ᴬR_B (3×3) mô tả hướng của hệ {B} so với {A}: <b>3 cột của nó là 3 trục x, y, z của {B}</b> viết theo tọa độ của {A}. Các cột dài bằng 1 và đôi một vuông góc, nên <b>R⁻¹ = Rᵀ</b> và det R = +1.'},
+ {q:'Ba ma trận quay cơ bản là gì?',k:['quay quanh truc','rx','ry','rz','ma tran quay co ban','quay quanh x','quay quanh y','quay quanh z'],
+  a:`<div class="mats3">${'<div><div class="lbl">R<sub>X</sub>(θ)</div>'+m3([['1','0','0'],['0','cθ','−sθ'],['0','sθ','cθ']])+'</div><div><div class="lbl">R<sub>Y</sub>(θ)</div>'+m3([['cθ','0','sθ'],['0','1','0'],['−sθ','0','cθ']])+'</div><div><div class="lbl">R<sub>Z</sub>(θ)</div>'+m3([['cθ','−sθ','0'],['sθ','cθ','0'],['0','0','1']])+'</div>'}</div>Hàng và cột của trục quay giữ nguyên (số 1). Riêng R<sub>Y</sub> có dấu trừ ở hàng dưới.`},
+ {q:'Ma trận biến đổi thuần nhất 4×4 là gì?',k:['thuan nhat','homogeneous','ma tran 4x4','ma tran t','ma tran bien doi','toa do thuan nhat'],
+  a:'Là ma trận gộp quay R và tịnh tiến p:'+'<div class="mat">'+'<table><tr><td class="r">R</td><td class="r"></td><td class="r"></td><td class="p">p</td></tr><tr><td class="r">(3×3)</td><td class="r"></td><td class="r"></td><td class="p">(3×1)</td></tr><tr><td>0</td><td>0</td><td>0</td><td>1</td></tr></table></div>'+'Thêm số 1 vào cuối vectơ thì đổi tọa độ chỉ còn một phép nhân: <b>ᴬP = ᴬT_B·ᴮP</b>, và ghép nhiều hệ chỉ cần nhân liên tiếp.'},
+ {q:'Nghịch đảo ma trận biến đổi T thế nào?',k:['nghich dao','t mu tru 1','t^-1','inverse transform'],
+  a:'Không cần bấm máy nghịch đảo 4×4. Phần quay chỉ cần chuyển vị: <b>Rᵀ</b>. Phần tịnh tiến là <b>−Rᵀ·p</b> (không phải chỉ đổi dấu p). Ví dụ R = I, p = (1; 2; 3) thì T⁻¹ có R = I, p = (−1; −2; −3).'},
+ {q:'Thứ tự nhân ma trận có quan trọng không?',k:['thu tu nhan','giao hoan','nhan ben trai','nhan ben phai','truc co dinh','truc di dong','ghep phep bien doi'],
+  a:'Rất quan trọng, vì nhân ma trận <b>không giao hoán</b>. Quay quanh <b>trục di động</b> (trục của hệ vừa quay) thì lần sau <b>nhân bên phải</b>. Quay quanh <b>trục cố định</b> thì <b>nhân bên trái</b>. Ghép hệ: ᴬT_C = ᴬT_B·ᴮT_C.'},
+ {q:'Góc Roll–Pitch–Yaw là gì?',k:['roll','pitch','yaw','rpy'],
+  a:'Ba góc quay quanh các <b>trục cố định</b>: ψ quanh X (roll), θ quanh Y (pitch), φ quanh Z (yaw). Vì trục cố định nên nhân bên trái: <b>R = R<sub>Z</sub>(φ)·R<sub>Y</sub>(θ)·R<sub>X</sub>(ψ)</b>. Giống cách mô tả hướng máy bay.'},
+ {q:'Góc Euler Z–X–Z là gì?',k:['euler','zxz','z-x-z','z x z'],
+  a:'Ba góc quay quanh các <b>trục di động</b>: ψ quanh Z, θ quanh X′ mới, φ quanh Z″ mới nhất. Vì trục di động nên nhân bên phải: <b>R = R<sub>Z</sub>(ψ)·R<sub>X′</sub>(θ)·R<sub>Z″</sub>(φ)</b>.'},
+ {q:'Quy tắc bàn tay phải là gì?',k:['ban tay phai','chieu quay duong','he thuan','quy tac tay phai'],
+  a:'Ngón cái chỉ X, ngón trỏ chỉ Y, ngón giữa gập vuông góc chỉ Z. Chiều quay dương: nắm tay phải, ngón cái theo trục, 4 ngón cuộn theo chiều dương (ngược chiều kim đồng hồ khi nhìn từ đầu mũi tên xuống).'},
+ {q:'Động học thuận là gì?',k:['dong hoc thuan','forward kinematic','forward','fk la gi'],
+  a:'Là bài toán <b>cho các góc khớp, tìm tư thế đầu tay</b>. Cách làm: viết ma trận D-H cho từng khâu rồi nhân lại: <b>⁰T₃ = ⁰A₁·¹A₂·²A₃</b>. Bài toán thuận luôn có đúng một đáp án.<div class="tries"><button class="try" data-q="30,45,-60">▶ Thử θ = (30°, 45°, −60°)</button></div>'},
+ {q:'Bảng D-H gồm những tham số nào?',k:['tham so d-h','tham so dh','bang d-h','bang dh','denavit','hartenberg','4 tham so','bon tham so'],
+  a:'Mỗi khâu có 4 tham số:<ul><li><b>a</b>: chiều dài khâu, khoảng cách giữa z<sub>i−1</sub> và zᵢ đo dọc xᵢ.</li><li><b>α</b>: góc xoắn, từ z<sub>i−1</sub> sang zᵢ quanh xᵢ.</li><li><b>d</b>: độ lệch khớp, đo dọc z<sub>i−1</sub>.</li><li><b>θ</b>: góc khớp, từ x<sub>i−1</sub> sang xᵢ quanh z<sub>i−1</sub>.</li></ul>Khớp quay thì θ là biến, khớp tịnh tiến thì d là biến.'},
+ {q:'Gán hệ tọa độ theo D-H thế nào?',k:['gan he','gan truc','dat he toa do','quy tac gan','cach gan'],
+  a:'<ol><li><b>zᵢ</b> nằm dọc trục khớp i+1.</li><li><b>xᵢ</b> nằm dọc đường vuông góc chung từ z<sub>i−1</sub> tới zᵢ. Hai trục cắt nhau thì xᵢ vuông góc với cả hai.</li><li><b>yᵢ</b> theo quy tắc bàn tay phải.</li></ol>'},
+ {q:'Công thức ma trận D-H Aᵢ?',k:['ma tran d-h','ma tran dh','ma tran a','cong thuc a','ma tran ai','ma tran cua khau'],
+  a:'<b>ⁱ⁻¹Aᵢ = Rot<sub>z</sub>(θ)·Trans<sub>z</sub>(d)·Trans<sub>x</sub>(a)·Rot<sub>x</sub>(α)</b>'+symMat([['cθ','−sθ·cα','sθ·sα','a·cθ'],['sθ','cθ·cα','−cθ·sα','a·sθ'],['0','sα','cα','d'],['0','0','0','1']])},
+ {q:'Vị trí đầu tay của robot này tính thế nào?',k:['vi tri dau tay tinh','cong thuc vi tri','px py pz','tinh p','tay dang nguoi','robot nay'],
+  a:'Robot dạng người với d₁ = 0,3, a₂ = 0,4, a₃ = 0,3 m:<p class="eq">pₓ = c₁(a₂c₂ + a₃c₂₃)<br>p_y = s₁(a₂c₂ + a₃c₂₃)<br>p_z = d₁ + a₂s₂ + a₃s₂₃</p>Tư thế home θ = (0, 0, 0) cho p = (0,7; 0; 0,3).<div class="tries"><button class="try" data-q="0,0,0">▶ Thử home</button></div>'},
+ {q:'Động học ngược là gì?',k:['dong hoc nguoc','inverse kinematic','inverse','ik la gi'],
+  a:'Là bài toán <b>cho điểm đích p, tìm các góc khớp</b>. Khó hơn động học thuận vì phương trình phi tuyến, có thể nhiều nghiệm hoặc vô nghiệm. Với robot này: định lý cos tìm θ₃, atan2 tìm θ₁, rồi tìm θ₂.<div class="tries"><button class="try" data-ik="0.3,0.2,0.5">▶ Thử p = (0,3; 0,2; 0,5)</button></div>'},
+ {q:'Công thức động học ngược của robot này?',k:['cong thuc ik','giai ik','giai dong hoc nguoc','tinh theta','c3','dinh ly cos'],
+  a:'Đặt p′_z = p_z − d₁, r = √(pₓ² + p_y²):<ol><li>c₃ = (pₓ² + p_y² + p′_z² − a₂² − a₃²)/(2a₂a₃), θ₃ = atan2(±√(1 − c₃²), c₃)</li><li>θ₁ = atan2(p_y, pₓ) hoặc θ₁ + 180°</li><li>θ₂ = atan2(p′_z, ±r) − atan2(a₃s₃, a₂ + a₃c₃)</li></ol>'},
+ {q:'Vì sao động học ngược có nhiều nghiệm?',k:['nhieu nghiem','4 nghiem','bon nghiem','bao nhieu nghiem','khuyu tren','khuyu duoi'],
+  a:'Có hai chỗ chọn dấu: <b>s₃ = ±√(1 − c₃²)</b> (khuỷu gập lên hay xuống) và <b>θ₁ hoặc θ₁ + 180°</b> (vai hướng tới hay quay ngược). 2 × 2 = <b>4 nghiệm</b>. Robot thật loại bớt nghiệm do giới hạn khớp hoặc va chạm.'},
+ {q:'Vì sao dùng atan2 mà không dùng atan?',k:['atan2','atan','arctan','acos','arccos'],
+  a:'arccos chỉ cho góc trong [0°, 180°], mất nửa vòng tròn. arctan(y/x) không phân biệt (1, 1) với (−1, −1). <b>atan2(y, x)</b> xét dấu cả x và y nên cho đúng góc trong (−180°, 180°]. Ví dụ atan2(1, 1) = 45°, atan2(−1, −1) = −135°.'},
+ {q:'Khi nào động học ngược vô nghiệm?',k:['vo nghiem','khong toi duoc','khong voi toi','ngoai tam'],
+  a:'Khi điểm nằm <b>ngoài không gian làm việc</b>. Trong công thức, nếu |c₃| &gt; 1 thì √(1 − c₃²) không tồn tại, nên vô nghiệm.<div class="tries"><button class="try" data-ik="1,1,1">▶ Thử điểm (1; 1; 1)</button></div>'},
+ {q:'Giải động học ngược robot 6 bậc thế nào?',k:['6 bac','co tay','tach co tay','spherical wrist','pw','tam co tay','co tay cau'],
+  a:'Dùng <b>tách cổ tay</b>: robot 6 bậc = tay dạng người + cổ tay cầu.<ol><li>Tâm cổ tay p_W = p − d₆·a.</li><li>Giải θ₁, θ₂, θ₃ như tay 3 khớp với p_W.</li><li>Tính ³R₆ = (⁰R₃)ᵀ·R, giải θ₄, θ₅, θ₆ bằng góc Euler.</li></ol>'},
+ {q:'Jacobian là gì?',k:['jacobian','jacobi','dong hoc vi phan','differential'],
+  a:'Jacobian J(q) liên hệ <b>vận tốc khớp q̇</b> với <b>vận tốc đầu tay</b>: ṗ = J_P·q̇, ω = J_O·q̇. Với khớp quay i: <b>J_Pi = z<sub>i−1</sub> × (p_E − p<sub>i−1</sub>)</b>, <b>J_Oi = z<sub>i−1</sub></b>. J thay đổi theo tư thế robot.'},
+ {q:'Điểm kỳ dị là gì?',k:['ky di','singularity','singular','suy bien','diem ky di','mat hang'],
+  a:'Là tư thế mà Jacobian <b>mất hạng</b> (det J = 0): đầu tay không đi được theo một số hướng, và gần đó vận tốc đầu tay nhỏ cũng cần vận tốc khớp rất lớn. Robot này có det(J_P) = −a₂a₃·s₃·(a₂c₂ + a₃c₂₃):<ul><li><b>Kỳ dị khuỷu</b>: θ₃ = 0 hoặc 180°, tay duỗi thẳng hoặc gập sát.</li><li><b>Kỳ dị vai</b>: đầu tay nằm trên trục z₀.</li></ul><div class="tries"><button class="try" data-act="elbow">▶ Kỳ dị khuỷu</button><button class="try" data-act="shoulder">▶ Kỳ dị vai</button></div>'},
+ {q:'Elipxoit vận tốc là gì?',k:['elipxoit','ellipsoid','manipulability','do kheo leo','van toc dau tay','van toc khop'],
+  a:'Là tập các vận tốc đầu tay v = J_P·q̇ khi ‖q̇‖ = 1. Trục dài là hướng đầu tay di chuyển dễ nhất. Gần kỳ dị, elipxoit bẹp lại. Độ khéo léo w = |det J_P| càng lớn thì càng xa kỳ dị.'},
+ {q:'Đường vuông góc chung là gì?',k:['vuong goc chung','common normal'],
+  a:'Hai trục khớp chéo nhau luôn có đúng một đoạn thẳng vuông góc với cả hai. Độ dài đoạn đó là tham số <b>a</b> trong bảng D-H. Hai trục cắt nhau thì a = 0. Hai trục song song thì a bằng khoảng cách giữa chúng.'}
+];
+
