@@ -20,16 +20,17 @@
     <p>Kỹ thuật Robot · theo bài giảng TS. Nguyễn Hoàng Giáp</p>
   </div>
   <nav class="chapnav" aria-label="Các chương">
-      <button type="button" data-ch="1" aria-current="false"><span class="num">1</span><span class="nm">Giới thiệu robot</span></button>
-      <button type="button" data-ch="2" aria-current="false"><span class="num">2</span><span class="nm">Thành phần robot</span></button>
-      <button type="button" data-ch="3" aria-current="false"><span class="num">3</span><span class="nm">Phép biến đổi</span></button>
-      <button type="button" data-ch="4" aria-current="false"><span class="num">4</span><span class="nm">Động học thuận</span><span class="bot" title="Có robot 3D">3D</span></button>
-      <button type="button" data-ch="5" aria-current="false"><span class="num">5</span><span class="nm">Động học ngược</span><span class="bot" title="Có robot 3D">3D</span></button>
-      <button type="button" data-ch="6" aria-current="false"><span class="num">6</span><span class="nm">Jacobian</span><span class="bot" title="Có robot 3D">3D</span></button>
+      <button type="button" data-ch="1" aria-current="false"><span class="num">1</span><span class="sh">Mở đầu</span><span class="nm">Giới thiệu robot</span></button>
+      <button type="button" data-ch="2" aria-current="false"><span class="num">2</span><span class="sh">Linh kiện</span><span class="nm">Thành phần robot</span></button>
+      <button type="button" data-ch="3" aria-current="false"><span class="num">3</span><span class="sh">Biến đổi</span><span class="nm">Phép biến đổi</span></button>
+      <button type="button" data-ch="4" aria-current="false"><span class="num">4</span><span class="sh">ĐH thuận</span><span class="nm">Động học thuận</span><span class="bot" title="Có robot 3D">3D</span></button>
+      <button type="button" data-ch="5" aria-current="false"><span class="num">5</span><span class="sh">ĐH ngược</span><span class="nm">Động học ngược</span><span class="bot" title="Có robot 3D">3D</span></button>
+      <button type="button" data-ch="6" aria-current="false"><span class="num">6</span><span class="sh">Jacobian</span><span class="nm">Jacobian</span><span class="bot" title="Có robot 3D">3D</span></button>
   </nav>
 </header>
 
-<main class="book" id="book">
+<div class="seg" id="seg" aria-label="Chế độ xem"><button type="button" data-v="read" aria-pressed="true">📖 Lý thuyết</button><button type="button" data-v="lab" aria-pressed="false">🤖 Robot 3D</button></div>
+<main class="book m-read" id="book">
   <div class="reading">
 <article class="lesson" id="les1" hidden>
   <p class="eyebrow">Chương 1</p>
@@ -853,7 +854,7 @@
     <div class="legend"><span style="color:var(--x)"><b>x</b></span><span style="color:var(--y)"><b>y</b></span><span style="color:var(--z)"><b>z</b> (trục khớp)</span><span>· kéo để xoay, cuộn để phóng</span></div>
   </div>
     <section class="card" id="dhCard">
-      <h2>Bảng tham số D-H</h2>
+      <h2>Bảng tham số D-H <button class="btn mob-only" id="btnDhEdit" type="button">Sửa a, α, d</button></h2>
       <div class="scroll">
         <table class="dh">
           <thead><tr><th>Khâu</th><th>aᵢ (m)</th><th>αᵢ (°)</th><th>dᵢ (m)</th><th>θᵢ (biến khớp)</th></tr></thead>
