@@ -692,77 +692,386 @@
 <article class="lesson" id="les4" hidden>
   <p class="eyebrow">Chương 4 · có robot bên cạnh</p>
   <h2>Động học thuận tay máy</h2>
-  <p class="lead">Cho các biến khớp q = (θ₁, θ₂, θ₃), tìm tư thế đầu tay so với đế dưới dạng ma trận ⁰T₃. Kéo slider θ ở bảng bên cạnh để thấy ma trận và cánh tay thay đổi.</p>
+  <p class="lead">Biết các góc khớp, tính ra đầu tay đang ở đâu và quay về hướng nào. Chương này chỉ dùng đúng một công cụ của Chương 3: nhân các ma trận biến đổi thuần nhất 4×4. Cái mới là <b>cách đặt hệ tọa độ có quy tắc</b> (quy ước Denavit–Hartenberg) để ai làm cũng ra cùng một bảng số. Kéo slider θ ở bảng bên cạnh để thấy ma trận và cánh tay thay đổi.</p>
 
-  <h3>4.1 Bốn tham số D-H</h3>
-  <ul>
-    <li><b>aᵢ</b> (chiều dài khâu): khoảng cách giữa z<sub>i−1</sub> và zᵢ, đo dọc xᵢ, là độ dài đường vuông góc chung.</li>
-    <li><b>αᵢ</b> (góc xoắn): góc từ z<sub>i−1</sub> sang zᵢ, quay quanh xᵢ.</li>
-    <li><b>dᵢ</b> (độ lệch khớp): khoảng cách dọc z<sub>i−1</sub>.</li>
-    <li><b>θᵢ</b> (góc khớp): góc từ x<sub>i−1</sub> sang xᵢ, quay quanh z<sub>i−1</sub>.</li>
-  </ul>
-  <p>Khớp quay thì θ là biến, ba tham số còn lại là hằng số. Khớp tịnh tiến thì d là biến.</p>
+  <div class="note"><b>Lộ trình chương:</b> 4.1 bài toán là gì → 4.2 khâu và khớp → 4.3 bốn tham số D-H → 4.4 cách đặt hệ trục → 4.5 ma trận D-H → 4.6 quy trình 6 bước → 4.7 đến 4.11 làm trọn các robot điển hình trong slide (tay phẳng 3 khâu, tay dạng người, SCARA, tay cầu, tay trụ, cổ tay cầu).</div>
 
-  <h3>4.2 Quy tắc gán hệ tọa độ</h3>
-  <ol>
-    <li>zᵢ nằm dọc trục khớp i+1.</li>
-    <li>xᵢ nằm dọc đường vuông góc chung từ z<sub>i−1</sub> tới zᵢ (hai trục cắt nhau thì xᵢ vuông góc với cả hai).</li>
-    <li>yᵢ lấy theo quy tắc bàn tay phải.</li>
-  </ol>
-  <p>Các mũi tên đỏ, xanh lá, xanh dương trên mô hình 3D chính là các hệ {0} tới {3}.</p>
+  <h3>4.1 Động học thuận là gì?</h3>
+  <p><b>Động học</b> (kinematics) nghiên cứu chuyển động mà <b>không quan tâm lực</b> gây ra chuyển động. Bài toán về lực là <b>động lực học</b> (dynamics), học sau. Khi có thêm yếu tố thời gian thì ta nói tới vận tốc, gia tốc (Chương 6).</p>
+  <p>Cách làm: gắn một hệ tọa độ lên mỗi khâu của robot. Khi các khớp quay, các hệ này di chuyển theo, và động học là bài toán mô tả quan hệ giữa các hệ đó.</p>
+  <figure class="fig pic"><img src="img/c4-dhthuan.webp" width="900" height="536" alt="Mô tả bên trong và bên ngoài của robot"><figcaption>Hai cách mô tả cùng một tư thế: "bên trong" bằng các biến khớp q = (q₁, …, qₙ), và "bên ngoài" bằng ma trận ⁰Tₙ (hoặc r gồm vị trí và góc). Động học thuận là đi từ trái sang phải.</figcaption></figure>
+  <div class="two">
+    <div class="box"><b>Không gian khớp</b> (joint space)<br>Tập các biến khớp q = (θ₁, θ₂, θ₃…). Đây là những gì động cơ điều khiển trực tiếp.</div>
+    <div class="box"><b>Không gian thao tác</b> (operational / tool space)<br>Vị trí p và hướng R của đầu tay. Đây là cái người dùng quan tâm: "gắp vật ở đâu".</div>
+  </div>
+  <p class="eq">Động học thuận:  q  ⟶  ⁰Tₙ(q) = [ R(q)  p(q) ; 0 0 0  1 ]</p>
+  <p><b>Ký hiệu viết tắt</b> dùng suốt chương: c₁ = cos θ₁, s₁ = sin θ₁, c₁₂ = cos(θ₁ + θ₂), s₂₃ = sin(θ₂ + θ₃), c₁₂₃ = cos(θ₁ + θ₂ + θ₃)…</p>
 
-  <h3>4.3 Ma trận D-H</h3>
-  <p class="eq">ⁱ⁻¹Aᵢ = Rot_z(θᵢ) · Trans_z(dᵢ) · Trans_x(aᵢ) · Rot_x(αᵢ)</p>
-  <div class="m" data-t="1" data-lbl="ⁱ⁻¹Aᵢ" data-m="cθᵢ,−sθᵢcαᵢ,sθᵢsαᵢ,aᵢcθᵢ;sθᵢ,cθᵢcαᵢ,−cθᵢsαᵢ,aᵢsθᵢ;0,sαᵢ,cαᵢ,dᵢ;0,0,0,1"></div>
-  <p class="eq">⁰T₃ = ⁰A₁ · ¹A₂ · ²A₃</p>
-
-  <h3>4.4 Ví dụ 4.8: tay dạng người 3 khớp</h3>
+  <h3>4.2 Khâu, khớp và cặp động thấp</h3>
+  <p>Tay máy là một <b>chuỗi các vật rắn</b> (gọi là <b>khâu</b>, link) nối với nhau bằng <b>khớp</b> (joint). Khi hai bề mặt trượt lên nhau tạo thành khớp, ta gọi là <b>cặp động thấp</b> (lower pair). Có 6 loại:</p>
+  <figure class="fig pic"><img src="img/c4-cap-khop.webp" width="900" height="685" alt="Sáu loại cặp động thấp"><figcaption>Sáu cặp động thấp. Robot công nghiệp gần như chỉ dùng hai loại đầu: khớp quay (R) và khớp tịnh tiến (P), mỗi loại 1 bậc tự do.</figcaption></figure>
   <div class="tbl"><table>
-    <tr><th>Khâu</th><th>a</th><th>α</th><th>d</th><th>θ</th></tr>
+    <tr><th>Khớp</th><th>Chuyển động</th><th>Biến khớp</th><th>Ký hiệu</th></tr>
+    <tr><td>Quay (revolute)</td><td>quay quanh một trục</td><td>góc θ</td><td>R</td></tr>
+    <tr><td>Tịnh tiến (prismatic)</td><td>trượt dọc một trục</td><td>độ dài d</td><td>P</td></tr>
+  </table></div>
+  <p><b>Đánh số:</b> robot n khớp có n + 1 khâu. Khâu 0 là đế (đứng yên). Khớp i nối khâu i − 1 với khâu i. Mỗi khớp có một <b>trục khớp</b>: trục mà khâu quay quanh hoặc trượt dọc theo.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 4.1: Đọc tên robot theo loại khớp</p>
+    <ul>
+      <li>Tay dạng người (robot bên cạnh): 3 khớp quay → <b>RRR</b>.</li>
+      <li>SCARA: quay, quay, tịnh tiến, quay → <b>RRPR</b>.</li>
+      <li>Tay cầu (Stanford): quay, quay, tịnh tiến → <b>RRP</b>.</li>
+      <li>Tay trụ: quay, tịnh tiến, tịnh tiến → <b>RPP</b>.</li>
+    </ul>
+  </div>
+
+  <h3>4.3 Bốn tham số D-H</h3>
+  <p>Ý tưởng của Denavit và Hartenberg (1955): nếu đặt hệ tọa độ theo đúng quy tắc, thì đi từ hệ {i−1} sang hệ {i} chỉ cần <b>4 con số</b>, thay vì 6 (3 dịch + 3 quay). Hai con số mô tả <b>hình dạng khâu</b>, hai con số mô tả <b>cách hai khâu nối với nhau</b>.</p>
+  <figure class="fig pic"><img src="img/c4-dh-he.webp" width="900" height="534" alt="Khâu i và hệ tọa độ D-H"><figcaption>Khâu i − 1 do khớp i − 1 làm chuyển động. Hệ {i} gắn chặt vào khâu i, trục zᵢ nằm dọc trục khớp i + 1. Đoạn màu đỏ là đường vuông góc chung giữa hai trục khớp.</figcaption></figure>
+  <figure class="fig pic"><img src="img/c4-dh-tham-so.webp" width="900" height="307" alt="Bốn tham số D-H trên hình"><figcaption>Bốn tham số trên hình (theo slide): dᵢ = O<sub>i−1</sub>D đo dọc z<sub>i−1</sub>; aᵢ = DOᵢ đo dọc xᵢ; θᵢ quay quanh z<sub>i−1</sub>; αᵢ quay quanh xᵢ.</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>Tham số</th><th>Tên gọi</th><th>Đo thế nào</th><th>Khi nào là biến?</th></tr>
+    <tr><td><b>aᵢ</b></td><td>chiều dài khâu</td><td>khoảng cách DOᵢ, đo <b>dọc xᵢ</b>. Là độ dài đường vuông góc chung của z<sub>i−1</sub> và zᵢ</td><td>luôn hằng số</td></tr>
+    <tr><td><b>αᵢ</b></td><td>góc xoắn khâu</td><td>góc từ z<sub>i−1</sub> sang zᵢ, quay <b>quanh xᵢ</b></td><td>luôn hằng số</td></tr>
+    <tr><td><b>dᵢ</b></td><td>độ lệch khớp (offset)</td><td>khoảng cách O<sub>i−1</sub>D, đo <b>dọc z<sub>i−1</sub></b></td><td>biến nếu khớp i tịnh tiến</td></tr>
+    <tr><td><b>θᵢ</b></td><td>góc khớp</td><td>góc từ x<sub>i−1</sub> sang xᵢ, quay <b>quanh z<sub>i−1</sub></b></td><td>biến nếu khớp i quay</td></tr>
+  </table></div>
+  <p><b>Mẹo nhớ:</b> "θ và d đi với z cũ (z<sub>i−1</sub>), a và α đi với x mới (xᵢ)". Dấu của a, d dương nếu cùng chiều trục đo. Dấu của θ, α theo quy tắc bàn tay phải quanh trục quay.</p>
+  <p>Mỗi khớp có đúng <b>một biến</b>: khớp quay thì θ thay đổi, a, α, d là hằng số. Khớp tịnh tiến thì d thay đổi, a, α, θ là hằng số.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 4.2: Trường hợp đặc biệt cần nhớ</p>
+    <ul>
+      <li>Hai trục khớp <b>cắt nhau</b>: đường vuông góc chung dài 0 nên <b>a = 0</b>.</li>
+      <li>Hai trục khớp <b>song song</b>: góc xoắn <b>α = 0</b> (hoặc 180°).</li>
+      <li>Hai trục khớp <b>vuông góc</b>: α = ±90°, dấu tùy chiều quay từ z<sub>i−1</sub> sang zᵢ quanh xᵢ.</li>
+    </ul>
+  </div>
+
+  <h3>4.4 Quy tắc gán hệ tọa độ</h3>
+  <ol>
+    <li><b>zᵢ</b> nằm dọc trục của <b>khớp i + 1</b> (lệch một số, đây là chỗ hay nhầm nhất).</li>
+    <li><b>Gốc Oᵢ</b> đặt tại giao điểm của zᵢ với đường vuông góc chung của z<sub>i−1</sub> và zᵢ.</li>
+    <li><b>xᵢ</b> nằm dọc đường vuông góc chung đó, hướng từ khớp i sang khớp i + 1.</li>
+    <li><b>yᵢ</b> lấy theo quy tắc bàn tay phải: yᵢ = zᵢ × xᵢ.</li>
+  </ol>
+  <p><b>Các trường hợp đặc biệt</b> (slide ghi chú):</p>
+  <ul>
+    <li><b>Hệ {0}:</b> chỉ bắt buộc z₀ dọc trục khớp 1. Gốc O₀ và x₀ chọn tùy ý, nên chọn sao cho nhiều tham số bằng 0 nhất.</li>
+    <li><b>Hệ {n}:</b> không có khớp n + 1, nên zₙ chọn tự do. Thường lấy zₙ cùng hướng z<sub>n−1</sub>, xₙ vuông góc với z<sub>n−1</sub>.</li>
+    <li><b>Hai trục liên tiếp song song:</b> đường vuông góc chung không duy nhất, chọn sao cho dᵢ = 0.</li>
+    <li><b>Hai trục liên tiếp cắt nhau:</b> xᵢ vuông góc với cả hai trục, chiều chọn tùy ý.</li>
+    <li><b>Khớp i tịnh tiến:</b> hướng z<sub>i−1</sub> chọn tùy ý theo phương trượt, gốc đặt ở vị trí tham chiếu (ví dụ giới hạn cơ khí).</li>
+  </ul>
+  <p>Các mũi tên đỏ (x), xanh lá (y), xanh dương (z) trên mô hình 3D chính là các hệ {0} tới {3} đặt theo đúng quy tắc này. Xoay mô hình để thấy z₁, z₂ nằm ngang dọc trục khớp 2, 3.</p>
+
+  <h3>4.5 Ma trận D-H</h3>
+  <p>Đi từ hệ {i−1} sang hệ {i} bằng <b>hai bước</b>, mỗi bước là một phép biến đổi quen thuộc ở Chương 3:</p>
+  <ol>
+    <li>Quay θᵢ quanh z<sub>i−1</sub> rồi tịnh tiến dᵢ dọc z<sub>i−1</sub>. Sau bước này, trục x đã trùng hướng xᵢ.</li>
+    <li>Tịnh tiến aᵢ dọc xᵢ rồi quay αᵢ quanh xᵢ. Sau bước này, trục z đã trùng zᵢ.</li>
+  </ol>
+  <div class="two">
+    <div class="m" data-t="1" data-lbl="Bước 1: Rot_z(θᵢ)·Trans_z(dᵢ)" data-m="cθᵢ,−sθᵢ,0,0;sθᵢ,cθᵢ,0,0;0,0,1,dᵢ;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="Bước 2: Trans_x(aᵢ)·Rot_x(αᵢ)" data-m="1,0,0,aᵢ;0,cαᵢ,−sαᵢ,0;0,sαᵢ,cαᵢ,0;0,0,0,1"></div>
+  </div>
+  <p>Nhân hai ma trận (đều là phép nhân sau vì ta quay quanh trục của hệ đang di chuyển):</p>
+  <div class="m" data-t="1" data-lbl="ⁱ⁻¹Aᵢ" data-m="cθᵢ,−sθᵢcαᵢ,sθᵢsαᵢ,aᵢcθᵢ;sθᵢ,cθᵢcαᵢ,−cθᵢsαᵢ,aᵢsθᵢ;0,sαᵢ,cαᵢ,dᵢ;0,0,0,1"></div>
+  <p><b>Đọc ma trận:</b> cột 4 là vị trí gốc Oᵢ trong hệ {i−1}: đi aᵢ theo hướng θᵢ trên mặt phẳng ngang, rồi lên dᵢ. Hàng 3 chỉ chứa α và d, không có θ. Không cần học thuộc: chỉ cần nhớ hai bước rồi nhân.</p>
+  <p>Hai dạng gặp nhiều nhất, thuộc lòng sẽ làm bài rất nhanh:</p>
+  <div class="two">
+    <div class="m" data-t="1" data-lbl="α = 0 (trục song song)" data-m="cθ,−sθ,0,acθ;sθ,cθ,0,asθ;0,0,1,d;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="α = 90°" data-m="cθ,0,sθ,acθ;sθ,0,−cθ,asθ;0,1,0,d;0,0,0,1"></div>
+  </div>
+  <p>Với α = −90° thì hàng 3 thành (0, −1, 0, d) và cột 2, cột 3 đổi dấu cho phù hợp: cột 2 = (0; 0; −1), cột 3 = (−sθ; cθ; 0).</p>
+  <div class="ex"><p class="ex-t">Ví dụ 4.3: Tính số cho một ma trận A</p>
+    <p>Khâu 2 của robot bên cạnh: a₂ = 0,4, α₂ = 0, d₂ = 0, θ₂ = 30°. Dùng dạng α = 0:</p>
+    <div class="m" data-t="1" data-lbl="¹A₂(30°)" data-m="0.866,−0.500,0,0.346;0.500,0.866,0,0.200;0,0,1,0;0,0,0,1"></div>
+    <p>Cột 4: gốc O₂ cách O₁ đúng 0,4 m theo hướng 30°: (0,4 × 0,866; 0,4 × 0,5) = (0,346; 0,2). Kiểm tra √(0,346² + 0,2²) = 0,4 ✓.</p>
+    <p>Khâu 1: a₁ = 0, α₁ = 90°, d₁ = 0,3, θ₁ = 30°. Dùng dạng α = 90°:</p>
+    <div class="m" data-t="1" data-lbl="⁰A₁(30°)" data-m="0.866,0,0.500,0;0.500,0,−0.866,0;0,1,0,0.3;0,0,0,1"></div>
+    <p>Gốc O₁ nằm thẳng trên đế 0,3 m. Cột 3 (hướng z₁) = (0,5; −0,866; 0) nằm ngang: đúng là trục khớp 2 nằm ngang.</p>
+  </div>
+
+  <h3>4.6 Quy trình giải bài động học thuận</h3>
+  <p>Slide có quy trình 10 bước. Gom lại cho dễ nhớ thành 6 bước:</p>
+  <ol>
+    <li><b>Tìm và đánh số các trục khớp</b> 1 … n. Vẽ z₀ … z<sub>n−1</sub> dọc các trục đó.</li>
+    <li><b>Đặt hệ {0}</b> trên trục z₀ (nên trùng với hệ đế nếu được).</li>
+    <li>Với i = 1 … n − 1: <b>đặt gốc Oᵢ, trục xᵢ, yᵢ</b> theo mục 4.4.</li>
+    <li><b>Đặt hệ {n}</b> ở đầu tay.</li>
+    <li><b>Lập bảng D-H</b>: mỗi khâu một hàng (aᵢ, αᵢ, dᵢ, θᵢ). Đánh dấu biến khớp.</li>
+    <li><b>Tính các ⁱ⁻¹Aᵢ rồi nhân</b>: ⁰Tₙ = ⁰A₁ · ¹A₂ ⋯ ⁿ⁻¹Aₙ.</li>
+  </ol>
+  <p>Nếu đế robot đặt lệch so với hệ thế giới, hoặc có dụng cụ gắn thêm ở đầu tay, thì nhân thêm hai ma trận hằng số ở hai đầu:</p>
+  <p class="eq">ᵇT_e(q) = ᵇT₀ · ⁰Tₙ(q) · ⁿT_e</p>
+  <p><b>Mẹo nhân:</b> nhân từ phải sang trái các khâu song song trước (ví dụ ¹A₂·²A₃ của tay dạng người là một tay phẳng 2 khâu), kết quả gọn hơn nhiều và dùng được công thức c₁₂, s₁₂.</p>
+  <p><b>Mẹo kiểm tra:</b> thay θ = 0 vào kết quả và so với hình vẽ tư thế ban đầu. Nếu đầu tay không nằm đúng chỗ thì bảng D-H sai.</p>
+
+  <h3>4.7 Tay phẳng 3 khâu (RRR phẳng)</h3>
+  <figure class="fig pic sm"><img src="img/c4-phang3.webp" width="657" height="703" alt="Tay phẳng 3 khâu"><figcaption>Ba khớp quay, ba trục song song vuông góc mặt giấy. W là cổ tay (đầu khâu 2), P là đầu tay.</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>Khâu</th><th>aᵢ</th><th>αᵢ</th><th>dᵢ</th><th>θᵢ</th></tr>
+    <tr><td>1</td><td>a₁</td><td>0</td><td>0</td><td>θ₁</td></tr>
+    <tr><td>2</td><td>a₂</td><td>0</td><td>0</td><td>θ₂</td></tr>
+    <tr><td>3</td><td>a₃</td><td>0</td><td>0</td><td>θ₃</td></tr>
+  </table></div>
+  <p>Ba trục song song nên mọi α = 0. Đặt các gốc trên cùng một mặt phẳng nên mọi d = 0. Cả ba ma trận đều có dạng "α = 0". Nhân hai ma trận quay phẳng thì <b>góc cộng lại</b> (R(θ₁)R(θ₂) = R(θ₁ + θ₂)), nên:</p>
+  <div class="m" data-t="1" data-lbl="⁰T₃" data-m="c₁₂₃,−s₁₂₃,0,a₁c₁ + a₂c₁₂ + a₃c₁₂₃;s₁₂₃,c₁₂₃,0,a₁s₁ + a₂s₁₂ + a₃s₁₂₃;0,0,1,0;0,0,0,1"></div>
+  <p>Đọc ra: <span class="eqi">x = a₁c₁ + a₂c₁₂ + a₃c₁₂₃</span>, <span class="eqi">y = a₁s₁ + a₂s₁₂ + a₃s₁₂₃</span>, <span class="eqi">φ = θ₁ + θ₂ + θ₃</span>. Mỗi số hạng là "hình chiếu của một khâu": khâu 2 nghiêng góc θ₁ + θ₂ so với trục x₀ vì nó chịu ảnh hưởng của cả khớp 1 và 2.</p>
+  <p>Không gian khớp (θ₁, θ₂, θ₃) có 3 chiều. Không gian thao tác cũng 3 chiều: tịnh tiến trên mặt phẳng xy và quay quanh z.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 4.4: Tính số cho tay phẳng</p>
+    <p>a = (0,5; 0,4; 0,2) m, θ = (30°, 40°, −30°). Góc cộng dồn: θ₁ = 30°, θ₁₂ = 70°, θ₁₂₃ = 40°.</p>
+    <ol>
+      <li>x = 0,5·cos30° + 0,4·cos70° + 0,2·cos40° = 0,433 + 0,137 + 0,153 = <b>0,723 m</b></li>
+      <li>y = 0,5·sin30° + 0,4·sin70° + 0,2·sin40° = 0,250 + 0,376 + 0,129 = <b>0,754 m</b></li>
+      <li>φ = 30° + 40° − 30° = <b>40°</b></li>
+    </ol>
+    <div class="m" data-t="1" data-lbl="⁰T₃" data-m="0.766,−0.643,0,0.723;0.643,0.766,0,0.754;0,0,1,0;0,0,0,1"></div>
+    <p>Bấm nút bên dưới: robot đổi sang tay phẳng với đúng bộ số này, đọc ⁰T₃ ở bảng bên cạnh để so.</p>
+  </div>
+  <div class="tries"><button class="try" data-preset="planar">▶ Đổi sang tay phẳng 3 khâu (0,5; 0,4; 0,2), θ = (30°, 40°, −30°)</button><button class="try" data-preset="anthro">▶ Trở lại tay dạng người</button></div>
+
+  <h3>4.8 Tay dạng người (robot bên cạnh)</h3>
+  <figure class="fig pic sm"><img src="img/c4-dang-nguoi.webp" width="706" height="585" alt="Tay dạng người 3 khớp"><figcaption>Khớp 1 (eo) trục thẳng đứng, khớp 2 (vai) và khớp 3 (khuỷu) trục nằm ngang, song song nhau.</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>Khâu</th><th>aᵢ</th><th>αᵢ</th><th>dᵢ</th><th>θᵢ</th></tr>
     <tr><td>1</td><td>0</td><td>90°</td><td>d₁ = 0,3</td><td>θ₁</td></tr>
     <tr><td>2</td><td>a₂ = 0,4</td><td>0</td><td>0</td><td>θ₂</td></tr>
     <tr><td>3</td><td>a₃ = 0,3</td><td>0</td><td>0</td><td>θ₃</td></tr>
   </table></div>
-  <p>Nhân ra được vị trí đầu tay:</p>
+  <p><b>Vì sao bảng như vậy?</b></p>
+  <ul>
+    <li>Khâu 1: trục z₀ (đứng) và z₁ (ngang) <b>cắt nhau</b> nên a₁ = 0. Chúng vuông góc nên α₁ = 90°. Gốc O₁ nằm ở độ cao vai nên d₁ = 0,3 m. (Slide vẽ vai ngay tại đế nên slide có d₁ = 0. Robot bên cạnh có thêm thân cao 0,3 m.)</li>
+    <li>Khâu 2, 3: trục song song nên α = 0, chọn d = 0. aᵢ chính là chiều dài cánh tay và cẳng tay.</li>
+  </ul>
+  <p>Ba ma trận (khâu 1 dạng α = 90°, khâu 2 và 3 dạng α = 0):</p>
+  <div class="scroll"><div class="mats3">
+    <div class="m" data-t="1" data-lbl="⁰A₁" data-m="c₁,0,s₁,0;s₁,0,−c₁,0;0,1,0,d₁;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="¹A₂" data-m="c₂,−s₂,0,a₂c₂;s₂,c₂,0,a₂s₂;0,0,1,0;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="²A₃" data-m="c₃,−s₃,0,a₃c₃;s₃,c₃,0,a₃s₃;0,0,1,0;0,0,0,1"></div>
+  </div></div>
+  <p><b>Bước nhân 1:</b> ¹A₂·²A₃ là tay phẳng 2 khâu (giống mục 4.7 bỏ khâu 3), góc cộng lại:</p>
+  <div class="m" data-t="1" data-lbl="¹T₃ = ¹A₂·²A₃" data-m="c₂₃,−s₂₃,0,a₂c₂ + a₃c₂₃;s₂₃,c₂₃,0,a₂s₂ + a₃s₂₃;0,0,1,0;0,0,0,1"></div>
+  <p><b>Bước nhân 2:</b> nhân ⁰A₁ ở bên trái. ⁰A₁ "dựng đứng" mặt phẳng đó lên và xoay nó quanh trục đứng một góc θ₁:</p>
+  <div class="scroll"><div class="m" data-t="1" data-lbl="⁰T₃" data-m="c₁c₂₃,−c₁s₂₃,s₁,c₁(a₂c₂ + a₃c₂₃);s₁c₂₃,−s₁s₂₃,−c₁,s₁(a₂c₂ + a₃c₂₃);s₂₃,c₂₃,0,d₁ + a₂s₂ + a₃s₂₃;0,0,0,1"></div></div>
   <p class="eq">pₓ = c₁(a₂c₂ + a₃c₂₃)<br>p_y = s₁(a₂c₂ + a₃c₂₃)<br>p_z = d₁ + a₂s₂ + a₃s₂₃</p>
-  <p>Ý quan trọng: tay dạng người = <b>xoay đế × tay phẳng 2 khâu dựng đứng</b>.</p>
+  <p><b>Hiểu bằng hình:</b> đặt r = a₂c₂ + a₃c₂₃ là "tầm vươn ngang" (khoảng cách từ trục đứng tới đầu tay), h = a₂s₂ + a₃s₂₃ là "độ cao so với vai". Khi đó p = (r·c₁; r·s₁; d₁ + h): xoay đế θ₁ chỉ quay tầm vươn r quanh trục đứng. Nói gọn: <b>tay dạng người = xoay đế × tay phẳng 2 khâu dựng đứng</b>.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 4.5: θ = (30°, 45°, −60°)</p>
+    <ol>
+      <li>θ₂₃ = 45° − 60° = −15°. c₂ = 0,7071, s₂ = 0,7071, c₂₃ = 0,9659, s₂₃ = −0,2588.</li>
+      <li>Tầm vươn: r = 0,4 × 0,7071 + 0,3 × 0,9659 = 0,2828 + 0,2898 = 0,5726 m.</li>
+      <li>Độ cao so với vai: h = 0,4 × 0,7071 + 0,3 × (−0,2588) = 0,2828 − 0,0776 = 0,2052 m.</li>
+      <li>p = (0,5726 × cos30°; 0,5726 × sin30°; 0,3 + 0,2052) = <b>(0,496; 0,286; 0,505)</b>.</li>
+    </ol>
+    <div class="m" data-t="1" data-lbl="⁰T₃(30°, 45°, −60°)" data-m="0.837,0.224,0.500,0.496;0.483,0.129,−0.866,0.286;−0.259,0.966,0,0.505;0,0,0,1"></div>
+    <p>Cột 3 (trục z₃) = (s₁; −c₁; 0) = (0,5; −0,866; 0) luôn nằm ngang: đó là trục khuỷu. Bấm nút cuối dưới đây để so với bảng bên cạnh.</p>
+  </div>
+  <div class="ex"><p class="ex-t">Ví dụ 4.6: Các tư thế nhẩm được</p>
+    <div class="tbl"><table>
+      <tr><th>θ</th><th>r</th><th>h</th><th>p</th><th>Hình dạng</th></tr>
+      <tr><td>(0°, 0°, 0°)</td><td>0,7</td><td>0</td><td>(0,7; 0; 0,3)</td><td>duỗi thẳng nằm ngang theo x₀</td></tr>
+      <tr><td>(90°, 0°, 0°)</td><td>0,7</td><td>0</td><td>(0; 0,7; 0,3)</td><td>xoay đế sang trục y₀</td></tr>
+      <tr><td>(0°, 90°, 0°)</td><td>0</td><td>0,7</td><td>(0; 0; 1,0)</td><td>dựng thẳng đứng</td></tr>
+      <tr><td>(0°, 90°, −90°)</td><td>0,3</td><td>0,4</td><td>(0,3; 0; 0,7)</td><td>cánh tay đứng, cẳng tay ngang</td></tr>
+    </table></div>
+  </div>
   <div class="tries">
-    <button class="try" data-q="0,0,0">▶ Thử (a): θ = (0°, 0°, 0°), p = (0,7; 0; 0,3)</button>
-    <button class="try" data-q="90,0,0">▶ Thử (b): θ = (90°, 0°, 0°), p = (0; 0,7; 0,3)</button>
+    <button class="try" data-q="0,0,0">▶ Thử: θ = (0°, 0°, 0°), p = (0,7; 0; 0,3)</button>
+    <button class="try" data-q="90,0,0">▶ Thử: θ = (90°, 0°, 0°), p = (0; 0,7; 0,3)</button>
     <button class="try" data-q="0,90,0">▶ Thử: θ₂ = 90°, cánh tay dựng đứng, p = (0; 0; 1,0)</button>
-    <button class="try" data-q="30,45,-60">▶ Thử: θ = (30°, 45°, −60°)</button>
+    <button class="try" data-q="0,90,-90">▶ Thử: θ = (0°, 90°, −90°), p = (0,3; 0; 0,7)</button>
+    <button class="try" data-q="30,45,-60">▶ Thử Ví dụ 4.5: θ = (30°, 45°, −60°)</button>
   </div>
 
-  <h3>4.5 Tay phẳng 3 khâu</h3>
-  <p>Ba khớp quay, các trục song song nên mọi αᵢ = 0, dᵢ = 0:</p>
-  <p class="eq">x = a₁c₁ + a₂c₁₂ + a₃c₁₂₃<br>y = a₁s₁ + a₂s₁₂ + a₃s₁₂₃<br>φ = θ₁ + θ₂ + θ₃</p>
-  <div class="tries"><button class="try" data-preset="planar">▶ Đổi sang tay phẳng 3 khâu (0,5; 0,4; 0,2)</button><button class="try" data-preset="anthro">▶ Trở lại tay dạng người</button></div>
+  <h3>4.9 Robot SCARA (RRPR)</h3>
+  <p>SCARA dùng nhiều để gắp đặt linh kiện trên mặt phẳng: hai khớp quay trục đứng, một khớp tịnh tiến lên xuống, một khớp quay xoay dụng cụ. Slide làm mẫu từng bước trên robot Sankyo SCARA SR 8447:</p>
+  <div class="pics">
+    <figure><img src="img/c4-scara-khop.webp" width="524" height="545" alt="SCARA: các biến khớp"><figcaption>Bước 0: bốn biến khớp q₁ … q₄</figcaption></figure>
+    <figure><img src="img/c4-scara-truc.webp" width="657" height="581" alt="SCARA: trục khớp"><figcaption>Bước 1: vẽ các trục khớp (nét đứt). J3 tịnh tiến và J4 quay chung một trục</figcaption></figure>
+    <figure><img src="img/c4-scara-khau.webp" width="589" height="545" alt="SCARA: chiều dài khâu"><figcaption>Bước 2: chiều dài khâu a₁, a₂ (a₃ = 0 vì hai trục trùng nhau)</figcaption></figure>
+    <figure><img src="img/c4-scara-he.webp" width="594" height="610" alt="SCARA: các hệ tọa độ"><figcaption>Bước 3: đặt các hệ. z₄ chỉ xuống dưới, là hướng tiếp cận a</figcaption></figure>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Khâu</th><th>aᵢ</th><th>αᵢ</th><th>dᵢ</th><th>θᵢ</th></tr>
+    <tr><td>1</td><td>a₁</td><td>0</td><td>d₁</td><td>θ₁</td></tr>
+    <tr><td>2</td><td>a₂</td><td>0</td><td>0</td><td>θ₂</td></tr>
+    <tr><td>3</td><td>0</td><td>0</td><td><b>d₃</b> (biến)</td><td>0</td></tr>
+    <tr><td>4</td><td>0</td><td>180°</td><td>d₄</td><td>θ₄</td></tr>
+  </table></div>
+  <p>Ghi chú của slide: có thể chọn d₁ = d₄ = 0, ở đây d₄ &lt; 0. α₄ = 180° vì ta muốn z₄ chỉ xuống (hướng dụng cụ đi vào vật). Bốn ma trận:</p>
+  <div class="scroll"><div class="mats3">
+    <div class="m" data-t="1" data-lbl="⁰A₁" data-m="c₁,−s₁,0,a₁c₁;s₁,c₁,0,a₁s₁;0,0,1,d₁;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="¹A₂" data-m="c₂,−s₂,0,a₂c₂;s₂,c₂,0,a₂s₂;0,0,1,0;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="²A₃" data-m="1,0,0,0;0,1,0,0;0,0,1,d₃;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="³A₄" data-m="c₄,s₄,0,0;s₄,−c₄,0,0;0,0,−1,d₄;0,0,0,1"></div>
+  </div></div>
+  <p>³A₄ dùng α = 180°: cos α = −1, sin α = 0, nên cột 2 và cột 3 đổi dấu so với dạng α = 0. Nhân tất cả:</p>
+  <div class="scroll"><div class="m" data-t="1" data-lbl="ᴮT_E = ⁰A₁·¹A₂·²A₃·³A₄" data-m="c₁₂₄,s₁₂₄,0,a₁c₁ + a₂c₁₂;s₁₂₄,−c₁₂₄,0,a₁s₁ + a₂s₁₂;0,0,−1,d₁ + d₃ + d₄;0,0,0,1"></div></div>
+  <p>Nhận xét: vị trí p chỉ phụ thuộc θ₁, θ₂, d₃ (phần xy là tay phẳng 2 khâu, phần z là tổng các độ cao). Hướng R = [n s a] chỉ phụ thuộc θ₁ + θ₂ + θ₄, và a = (0; 0; −1) luôn chỉ xuống.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 4.7: SCARA với a₁ = 0,4, a₂ = 0,3</p>
+    <p>θ₁ = 0°, θ₂ = 90°: phần xy = (0,4 + 0,3·cos90°; 0 + 0,3·sin90°) = <b>(0,4; 0,3)</b>. Khâu 1 nằm dọc x₀, khâu 2 gập vuông góc sang y₀. Hạ khớp 3 thêm 0,05 m thì d₃ giảm 0,05 m và chỉ p_z thay đổi.</p>
+  </div>
+
+  <h3>4.10 Tay cầu và tay trụ</h3>
+  <h4>Tay cầu (Stanford, RRP)</h4>
+  <figure class="fig pic sm"><img src="img/c4-cau.webp" width="610" height="586" alt="Tay cầu"><figcaption>Hai khớp quay có trục vuông góc, khớp 3 tịnh tiến ra vào. Đầu tay quét một mặt cầu khi d₃ cố định.</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>Khâu</th><th>aᵢ</th><th>αᵢ</th><th>dᵢ</th><th>θᵢ</th></tr>
+    <tr><td>1</td><td>0</td><td>−90°</td><td>0</td><td>θ₁</td></tr>
+    <tr><td>2</td><td>0</td><td>90°</td><td>d₂</td><td>θ₂</td></tr>
+    <tr><td>3</td><td>0</td><td>0</td><td><b>d₃</b> (biến)</td><td>0</td></tr>
+  </table></div>
+  <div class="scroll"><div class="mats3">
+    <div class="m" data-t="1" data-lbl="⁰A₁" data-m="c₁,0,−s₁,0;s₁,0,c₁,0;0,−1,0,0;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="¹A₂" data-m="c₂,0,s₂,0;s₂,0,−c₂,0;0,1,0,d₂;0,0,0,1"></div>
+    <div class="m" data-t="1" data-lbl="²A₃" data-m="1,0,0,0;0,1,0,0;0,0,1,d₃;0,0,0,1"></div>
+  </div></div>
+  <div class="scroll"><div class="m" data-t="1" data-lbl="⁰T₃" data-m="c₁c₂,−s₁,c₁s₂,c₁s₂d₃ − s₁d₂;s₁c₂,c₁,s₁s₂,s₁s₂d₃ + c₁d₂;−s₂,0,c₂,c₂d₃;0,0,0,1"></div></div>
+  <p class="note">⚠ <b>Lỗi in trong slide:</b> ở ¹A₂, hàng 3 phải là (0, <b>1</b>, 0, d₂) vì α₂ = +90° nên sin α₂ = 1 (slide in −1, chính thầy đã ghi chú "edit A12: −1 → 1"). Kết quả ⁰T₃ trong slide đúng với số 1. Mình đã kiểm tra lại bằng máy.</p>
+
+  <h4>Tay trụ (RPP)</h4>
+  <figure class="fig pic sm"><img src="img/c4-tru.webp" width="551" height="667" alt="Tay trụ"><figcaption>Khớp 1 quay quanh trục đứng, khớp 2 nâng lên xuống, khớp 3 vươn ra. Vùng làm việc là một khối trụ rỗng.</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>Khâu</th><th>aᵢ</th><th>αᵢ</th><th>dᵢ</th><th>θᵢ</th></tr>
+    <tr><td>1</td><td>0</td><td>0</td><td>d₁</td><td>θ₁</td></tr>
+    <tr><td>2</td><td>0</td><td>−90°</td><td><b>d₂</b> (biến)</td><td>0</td></tr>
+    <tr><td>3</td><td>0</td><td>0</td><td><b>d₃</b> (biến)</td><td>0</td></tr>
+  </table></div>
+  <div class="scroll"><div class="m" data-t="1" data-lbl="⁰T₃" data-m="c₁,0,−s₁,−s₁d₃;s₁,0,c₁,c₁d₃;0,−1,0,d₁ + d₂;0,0,0,1"></div></div>
+  <p>Đọc ra rất "trụ": độ cao p_z = d₁ + d₂, bán kính vươn = d₃, góc quay quanh trục đứng = θ₁ (lệch 90° vì cánh tay vươn theo hướng y₁).</p>
+
+  <h3>4.11 Cổ tay cầu và robot 6 bậc</h3>
+  <figure class="fig pic"><img src="img/c4-co-tay.webp" width="658" height="364" alt="Cổ tay cầu"><figcaption>Ba trục khớp 4, 5, 6 cắt nhau tại một điểm (tâm cổ tay W). d₆ là khoảng cách từ W tới mặt bích đầu tay.</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>Khâu</th><th>aᵢ</th><th>αᵢ</th><th>dᵢ</th><th>θᵢ</th></tr>
+    <tr><td>4</td><td>0</td><td>−90°</td><td>0</td><td>θ₄</td></tr>
+    <tr><td>5</td><td>0</td><td>90°</td><td>0</td><td>θ₅</td></tr>
+    <tr><td>6</td><td>0</td><td>0</td><td>d₆</td><td>θ₆</td></tr>
+  </table></div>
+  <div class="scroll"><div class="m" data-t="1" data-lbl="³T₆ = ³A₄·⁴A₅·⁵A₆" data-m="c₄c₅c₆ − s₄s₆,−c₄c₅s₆ − s₄c₆,c₄s₅,c₄s₅d₆;s₄c₅c₆ + c₄s₆,−s₄c₅s₆ + c₄c₆,s₄s₅,s₄s₅d₆;−s₅c₆,s₅s₆,c₅,c₅d₆;0,0,0,1"></div></div>
+  <p>Phần quay của ³T₆ chính là ma trận <b>góc Euler ZYZ</b> (φ, θ, ψ) = (θ₄, θ₅, θ₆) ở Chương 3. Vì vậy cổ tay cầu quyết định <b>hướng</b>, còn cánh tay (3 khớp đầu) quyết định <b>vị trí</b> tâm cổ tay.</p>
+  <p>Robot 6 bậc (như Yaskawa GP7 ở Chương 1) = tay dạng người + cổ tay cầu:</p>
+  <p class="eq">⁰T₆ = ⁰T₃(θ₁, θ₂, θ₃) · ³T₆(θ₄, θ₅, θ₆)</p>
+  <p>(Khi ghép, khâu 3 của tay dạng người được đặt lại để z₃ trùng trục khớp 4. Chi tiết này thầy sẽ cho trong bảng D-H của từng robot cụ thể.) Ý tách đôi này dùng lại ở Chương 5 để giải ngược.</p>
 
   <div class="quiz"><b>Tự kiểm tra</b>
-    <details><summary>Với VD 4.8, θ = (0°, 90°, −90°) thì đầu tay ở đâu?</summary>p = (0,3; 0; 0,7): vai dựng đứng lên 0,4 m, cẳng tay nằm ngang 0,3 m. Bấm nút θ trong bảng để kiểm tra.</details>
-    <details><summary>Vì sao α₁ = 90° mà α₂ = α₃ = 0?</summary>Trục khớp 1 thẳng đứng, trục khớp 2 nằm ngang nên z₀ ⊥ z₁. Trục 2 và 3 song song nên góc xoắn bằng 0.</details>
+    <details><summary>Với tay dạng người, θ = (0°, 90°, −90°) thì đầu tay ở đâu?</summary>r = 0,4·cos90° + 0,3·cos0° = 0,3; h = 0,4·sin90° + 0,3·sin0° = 0,4. Vậy p = (0,3; 0; 0,7): vai dựng đứng 0,4 m, cẳng tay nằm ngang 0,3 m. Có nút ▶ ở mục 4.8 để kiểm tra.</details>
+    <details><summary>Vì sao α₁ = 90° mà α₂ = α₃ = 0?</summary>Trục khớp 1 thẳng đứng, trục khớp 2 nằm ngang nên z₀ ⊥ z₁, α₁ = 90°. Trục khớp 2 và 3 song song nên góc xoắn bằng 0.</details>
+    <details><summary>Khớp tịnh tiến thì tham số nào là biến?</summary>dᵢ. Ba tham số còn lại (aᵢ, αᵢ, θᵢ) là hằng số. Ví dụ d₃ của SCARA và tay cầu.</details>
+    <details><summary>Ở ma trận D-H, cột 4 cho biết gì?</summary>Vị trí gốc Oᵢ nhìn trong hệ {i−1}: (aᵢcθᵢ; aᵢsθᵢ; dᵢ). Ba cột đầu là ba trục xᵢ, yᵢ, zᵢ nhìn trong hệ {i−1}.</details>
+    <details><summary>Tay phẳng 3 khâu a = (1; 1; 1), θ = (90°, −90°, 0°). Tính x, y, φ.</summary>θ₁ = 90°, θ₁₂ = 0°, θ₁₂₃ = 0°. x = 0 + 1 + 1 = 2, y = 1 + 0 + 0 = 1, φ = 0°. Khâu 1 dựng đứng, khâu 2 và 3 nằm ngang.</details>
+    <details><summary>Vì sao trục z₃ của tay dạng người luôn nằm ngang?</summary>Cột 3 của ⁰T₃ là (s₁; −c₁; 0), thành phần z bằng 0. Trục khuỷu song song trục vai, và cả hai luôn nằm ngang dù θ₂, θ₃ là bao nhiêu.</details>
   </div>
 </article>
 
 <article class="lesson" id="les5" hidden>
   <p class="eyebrow">Chương 5 · có robot bên cạnh</p>
   <h2>Động học ngược</h2>
-  <p class="lead">Cho điểm đích p, tìm các góc khớp. Nhập p ở bảng bên cạnh, bấm Giải để xem đủ 4 nghiệm và cánh tay chạy tới.</p>
+  <p class="lead">Chiều ngược của Chương 4: biết đầu tay cần tới đâu (và quay về hướng nào), tìm các góc khớp. Đây là bài toán robot phải giải mỗi khi ta ra lệnh "gắp vật ở điểm p". Nhập p ở bảng bên cạnh, bấm Giải để xem đủ 4 nghiệm từng bước và cánh tay chạy tới.</p>
 
-  <h3>5.1 Vì sao bài toán ngược khó hơn?</h3>
+  <div class="note"><b>Lộ trình chương:</b> 5.1 bài toán → 5.2 vì sao khó → 5.3 vùng làm việc → 5.4 hai cách giải → 5.5 bộ công cụ (atan2, định lý cos, hai "chiêu") → 5.6 tay phẳng 3 khâu → 5.7 tay dạng người (robot bên cạnh) → 5.8 robot 6 bậc: tách cổ tay → 5.9 cổ tay cầu.</div>
+
+  <h3>5.1 Bài toán động học ngược</h3>
+  <figure class="fig pic"><img src="img/c5-thuan-nguoc.webp" width="900" height="597" alt="Động học thuận và ngược"><figcaption>Động học thuận: từ góc khớp Θ ra tư thế đầu tay x. Động học ngược: từ x tìm lại Θ.</figcaption></figure>
+  <p>"Cho tư thế mong muốn của đầu tay (vị trí + hướng), tìm giá trị các biến khớp tạo ra tư thế đó." Đầu vào có hai dạng:</p>
   <ul>
-    <li>Phương trình phi tuyến (có sin, cos), thường không giải trực tiếp được.</li>
-    <li>Có thể <b>nhiều nghiệm</b>, <b>vô số nghiệm</b> (robot thừa bậc tự do hoặc ở cấu hình kỳ dị), hoặc <b>vô nghiệm</b> (điểm ngoài vùng làm việc).</li>
+    <li><b>Dạng cổ điển:</b> cho cả ma trận T = [R p; 0 1], tìm q sao cho ⁰Tₙ(q) = T.</li>
+    <li><b>Dạng tổng quát:</b> chỉ cho các biến cần quan tâm r = (p, φ), ví dụ chỉ vị trí p cho robot 3 bậc.</li>
   </ul>
+  <div class="tbl"><table>
+    <tr><th></th><th>Động học thuận</th><th>Động học ngược</th></tr>
+    <tr><td>Cho</td><td>góc khớp q</td><td>tư thế T (hoặc p)</td></tr>
+    <tr><td>Tìm</td><td>tư thế T</td><td>góc khớp q</td></tr>
+    <tr><td>Cách làm</td><td>nhân ma trận, luôn làm được</td><td>giải hệ phương trình lượng giác</td></tr>
+    <tr><td>Số nghiệm</td><td>luôn đúng 1</td><td>0, 1, nhiều, hoặc vô số</td></tr>
+  </table></div>
 
-  <h3>5.2 Ba "chiêu" lặp lại</h3>
+  <h3>5.2 Vì sao bài toán ngược khó hơn?</h3>
   <ul>
-    <li><b>atan2:</b> đã có cả sin và cos thì θ = atan2(sin θ, cos θ). Khác arccos (chỉ cho [0°, 180°]) và arctan (không phân biệt (1, 1) với (−1, −1)).</li>
-    <li><b>Chiêu A:</b> cos θ = k thì θ = atan2(±√(1 − k²), k). Nếu |k| &gt; 1 thì vô nghiệm.</li>
-    <li><b>Chiêu B:</b> X = k₁cθ − k₂sθ, Y = k₂cθ + k₁sθ thì θ = atan2(Y, X) − atan2(k₂, k₁).</li>
+    <li><b>Phi tuyến:</b> phương trình chứa sin, cos của tổng các góc, thường không giải trực tiếp được bằng công thức đóng.</li>
+    <li><b>Nhiều nghiệm:</b> cùng một điểm có thể với tới bằng nhiều kiểu tay (khuỷu trên/khuỷu dưới, quay mặt tới/quay lưng lại).</li>
+    <li><b>Vô số nghiệm:</b> khi robot thừa bậc tự do (ví dụ tay phẳng 3 khâu mà chỉ cho vị trí, không cho góc φ) hoặc khi robot ở cấu hình kỳ dị.</li>
+    <li><b>Vô nghiệm:</b> khi điểm nằm ngoài vùng làm việc, hoặc nghiệm vượt giới hạn khớp.</li>
   </ul>
+  <div class="ex"><p class="ex-t">Ví dụ 5.1: Nhiều nghiệm bằng hình ảnh</p>
+    <p>Tay phẳng 2 khâu với tới một điểm bên trong vùng làm việc theo đúng <b>hai cách</b>: khuỷu cong lên hoặc khuỷu cong xuống. Hai tam giác vai, khuỷu, đầu tay đối xứng nhau qua đường nối vai với đầu tay. Tay dạng người còn thêm một cách nữa là xoay đế 180° rồi "ngửa ra sau", nên có <b>4 nghiệm</b>.</p>
+  </div>
 
-  <h3>5.3 Tay dạng người 3 khớp</h3>
+  <h3>5.3 Vùng làm việc</h3>
+  <figure class="fig pic"><img src="img/c5-vung-lam-viec.webp" width="900" height="557" alt="Vùng làm việc của robot"><figcaption>Mặt cắt vùng làm việc của một robot công nghiệp: phần tô xám là nơi đầu tay với tới (nhìn ngang), vòng cung dưới là góc quay của đế (nhìn từ trên).</figcaption></figure>
+  <ul>
+    <li><b>Vùng làm việc chính WS₁:</b> tập các vị trí p với tới được với <b>ít nhất một</b> hướng. Ngoài WS₁ thì vô nghiệm.</li>
+    <li><b>Vùng làm việc khéo léo WS₂:</b> tập các vị trí p với tới được với <b>mọi</b> hướng (mà robot có thể có).</li>
+    <li>Luôn có <b>WS₂ ⊆ WS₁</b>. Ví dụ tay phẳng 3 khâu: ở mép ngoài cùng, đầu tay chỉ có một hướng duy nhất là hướng duỗi thẳng ra.</li>
+  </ul>
+  <div class="ex"><p class="ex-t">Ví dụ 5.2: WS₁ của robot bên cạnh</p>
+    <p>Đầu tay cách vai (điểm (0; 0; d₁)) một khoảng ρ = √(pₓ² + p_y² + (p_z − d₁)²). Hai khâu dài 0,4 và 0,3 m nên theo bất đẳng thức tam giác:</p>
+    <p class="eq">|a₂ − a₃| ≤ ρ ≤ a₂ + a₃   ⇔   0,1 ≤ ρ ≤ 0,7 m</p>
+    <p>WS₁ là một <b>vỏ cầu</b> tâm ở vai, bán kính trong 0,1 m, bán kính ngoài 0,7 m (chưa tính giới hạn góc khớp và sàn). Điểm (1; 1; 1) có ρ = √(1 + 1 + 0,49) = 1,58 &gt; 0,7 nên vô nghiệm.</p>
+  </div>
+
+  <h3>5.4 Hai cách giải</h3>
+  <div class="two">
+    <div class="box"><b>Giải tích</b> (công thức đóng)<br>• Ưu tiên dùng nếu tìm được<br>• Dùng hình học (nhìn hình, định lý cos) hoặc đại số (biến đổi phương trình)<br>• Nhanh, cho đủ mọi nghiệm<br>• Robot 6 bậc có công thức đóng nếu 3 trục khớp liên tiếp <b>cắt nhau tại một điểm</b> (cổ tay cầu) hoặc <b>song song</b> nhau</div>
+    <div class="box"><b>Số</b> (lặp)<br>• Bắt buộc khi robot thừa bậc tự do (n &gt; m) hoặc ở gần kỳ dị<br>• Chậm hơn nhưng dễ cài đặt<br>• Dùng ma trận Jacobian J = ∂f/∂q (Chương 6)<br>• Phương pháp Newton, phương pháp gradient…</div>
+  </div>
+  <p>Chương này học cách giải tích. Ở Chương 6 có thuật toán lặp "resolved-rate", chính là ý tưởng của cách giải số.</p>
+
+  <h3>5.5 Bộ công cụ</h3>
+  <h4>atan2: tính góc từ sin và cos</h4>
+  <p>Nếu đã biết cả sin θ và cos θ (hoặc hai số tỉ lệ với chúng) thì <span class="eqi">θ = atan2(sin θ, cos θ)</span>. Hàm atan2(y, x) cho góc của điểm (x, y) trong <b>đủ 4 góc phần tư</b>, kết quả trong (−180°, 180°].</p>
+  <div class="tbl"><table>
+    <tr><th>Điểm (x, y)</th><th>arctan(y/x)</th><th>atan2(y, x)</th></tr>
+    <tr><td>(1, 1)</td><td>45°</td><td>45°</td></tr>
+    <tr><td>(−1, −1)</td><td>45° ✗</td><td>−135° ✓</td></tr>
+    <tr><td>(−1, 1)</td><td>−45° ✗</td><td>135° ✓</td></tr>
+    <tr><td>(0, 1)</td><td>chia cho 0 ✗</td><td>90° ✓</td></tr>
+  </table></div>
+  <p>Vì sao không dùng arccos? arccos chỉ trả về [0°, 180°], nên <b>mất mọi nghiệm góc âm</b>. arcsin chỉ trả về [−90°, 90°]. Quy tắc: <b>luôn tìm cả sin và cos rồi dùng atan2</b>.</p>
+  <h4>Chiêu A: biết cos, tìm góc</h4>
+  <p class="eq">cos θ = k  ⟹  θ = atan2(±√(1 − k²), k)</p>
+  <p>Dấu ± cho <b>2 nghiệm</b> đối xứng. Nếu |k| &gt; 1 thì <b>vô nghiệm</b> (điểm ngoài vùng làm việc). Nếu |k| = 1 thì hai nghiệm trùng nhau (tay duỗi thẳng hoặc gập sát, chính là kỳ dị).</p>
+  <h4>Chiêu B: hệ dạng "xoay"</h4>
+  <p>Gặp hệ <span class="eqi">X = k₁cθ − k₂sθ</span>, <span class="eqi">Y = k₂cθ + k₁sθ</span>. Đặt (k₁, k₂) = ρ(cos γ, sin γ) thì X = ρcos(θ + γ), Y = ρsin(θ + γ), nên:</p>
+  <p class="eq">θ = atan2(Y, X) − atan2(k₂, k₁)</p>
+  <p>Hiểu bằng hình: vectơ (X, Y) là vectơ (k₁, k₂) bị quay thêm góc θ. Góc θ = góc của (X, Y) trừ góc của (k₁, k₂).</p>
+  <h4>Định lý cos</h4>
+  <p>Tam giác có hai cạnh a, b kẹp góc C thì cạnh đối diện c² = a² + b² − 2ab·cos C. Trong robot, hai cạnh là hai khâu, cạnh thứ ba là đoạn nối vai với đầu tay (hoặc cổ tay), nên định lý cos cho ngay <b>góc khuỷu</b>.</p>
+
+  <h3>5.6 Tay phẳng 3 khâu</h3>
+  <figure class="fig pic sm"><img src="img/c4-phang3.webp" width="657" height="703" alt="Tay phẳng 3 khâu với cổ tay W"><figcaption>Cho p = (pₓ, p_y) và góc φ. W là điểm cổ tay (đầu khâu 2). α là góc của OW, β là góc giữa OW và khâu 1.</figcaption></figure>
+  <p>Đầu vào: vị trí (pₓ, p_y) và góc đầu tay φ. Từ động học thuận (mục 4.7):</p>
+  <p class="eq">φ = θ₁ + θ₂ + θ₃                                (1)<br>p_Wx = pₓ − a₃c_φ = a₁c₁ + a₂c₁₂            (2)<br>p_Wy = p_y − a₃s_φ = a₁s₁ + a₂s₁₂            (3)</p>
+  <p class="note">⚠ <b>Lỗi in trong slide (trang 6):</b> phương trình (3) in là a₁c₁ + a₂s₁₂. Đúng phải là <b>a₁s₁ + a₂s₁₂</b> (toàn sin), vì đây là thành phần y.</p>
+  <p><b>Ý tưởng:</b> biết φ thì khâu 3 có hướng cố định, nên "lùi" từ đầu tay một đoạn a₃ theo hướng φ sẽ ra cổ tay W. Bài toán còn lại là tay phẳng <b>2 khâu</b> với tới W.</p>
+  <h4>Cách đại số (slide trang 6, 7)</h4>
+  <ol>
+    <li>Bình phương (2), (3) rồi cộng (c₁c₁₂ + s₁s₁₂ = c₂): <span class="eqi">p_Wx² + p_Wy² = a₁² + a₂² + 2a₁a₂c₂</span></li>
+    <li>Chiêu A: <span class="eqi">c₂ = (p_Wx² + p_Wy² − a₁² − a₂²) / (2a₁a₂)</span>, <span class="eqi">s₂ = ±√(1 − c₂²)</span>, <span class="eqi">θ₂ = atan2(s₂, c₂)</span></li>
+    <li>Thay θ₂ vào (2), (3): đây là hệ tuyến tính với ẩn c₁, s₁. Giải ra:<br>
+      <span class="eqi">s₁ = [(a₁ + a₂c₂)p_Wy − a₂s₂p_Wx] / (p_Wx² + p_Wy²)</span><br>
+      <span class="eqi">c₁ = [(a₁ + a₂c₂)p_Wx + a₂s₂p_Wy] / (p_Wx² + p_Wy²)</span>, <span class="eqi">θ₁ = atan2(s₁, c₁)</span></li>
+    <li>Từ (1): <span class="eqi">θ₃ = φ − θ₁ − θ₂</span></li>
+  </ol>
+  <h4>Cách hình học (slide trang 8, 9)</h4>
+  <ol>
+    <li>Định lý cos trong tam giác O, khuỷu, W (góc ở khuỷu là π − θ₂) cho lại đúng công thức c₂ ở trên.</li>
+    <li><span class="eqi">α = atan2(p_Wy, p_Wx)</span>: góc của đường OW (phải dùng atan2 vì phụ thuộc dấu của p_Wx, p_Wy).</li>
+    <li>Định lý cos lần nữa: <span class="eqi">β = arccos[(p_Wx² + p_Wy² + a₁² − a₂²) / (2a₁√(p_Wx² + p_Wy²))]</span> (ở đây arccos dùng được vì β luôn nằm trong [0, π]).</li>
+    <li><span class="eqi">θ₁ = α ∓ β</span>: lấy dấu trừ khi θ₂ &gt; 0, dấu cộng khi θ₂ &lt; 0. Rồi θ₃ = φ − θ₁ − θ₂.</li>
+  </ol>
+  <div class="ex"><p class="ex-t">Ví dụ 5.3: Giải ngược lại Ví dụ 4.4</p>
+    <p>a = (0,5; 0,4; 0,2), cho p = (0,723; 0,754), φ = 40°. Tìm θ.</p>
+    <ol>
+      <li>Cổ tay: p_W = (0,723 − 0,2·cos40°; 0,754 − 0,2·sin40°) = (0,570; 0,626). p_Wx² + p_Wy² = 0,716.</li>
+      <li>c₂ = (0,716 − 0,25 − 0,16) / (2·0,5·0,4) = 0,306 / 0,4 = 0,766. s₂ = ±0,643. θ₂ = <b>±40°</b>.</li>
+      <li>α = atan2(0,626; 0,570) = 47,7°. β = arccos[(0,716 + 0,25 − 0,16) / (2·0,5·0,846)] = arccos(0,953) = 17,7°.</li>
+      <li>Nghiệm 1 (θ₂ = +40°): θ₁ = 47,7° − 17,7° = <b>30°</b>, θ₃ = 40° − 30° − 40° = <b>−30°</b>. Đúng bộ góc ban đầu ✓</li>
+      <li>Nghiệm 2 (θ₂ = −40°): θ₁ = 47,7° + 17,7° = <b>65,4°</b>, θ₃ = 40° − 65,4° + 40° = <b>14,6°</b>.</li>
+    </ol>
+    <p>Hai nghiệm là hai kiểu khuỷu. Nếu bỏ điều kiện φ thì tay phẳng 3 khâu <b>thừa bậc tự do</b>: mỗi φ cho một W khác, nên có vô số nghiệm.</p>
+  </div>
+
+  <h3>5.7 Tay dạng người (robot bên cạnh)</h3>
   <figure class="fig">
     <svg viewBox="0 0 300 170" role="img" aria-label="Tam giác vai khuỷu đầu tay">
       <line x1="40" y1="150" x2="270" y2="150" stroke="var(--line)"/>
@@ -771,74 +1080,271 @@
       <line x1="150" y1="35" x2="240" y2="80" stroke="var(--link)" stroke-width="7" stroke-linecap="round"/>
       <line x1="60" y1="110" x2="240" y2="80" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
       <circle cx="60" cy="110" r="6" fill="var(--ink)"/><circle cx="150" cy="35" r="6" fill="var(--ink)"/><circle cx="240" cy="80" r="7" fill="var(--bad)"/>
-      <g font-size="12" fill="var(--ink)"><text x="92" y="66">a₂</text><text x="200" y="50">a₃</text><text x="140" y="112" fill="var(--accent)">khoảng cách vai → p</text>
+      <g font-size="12" fill="var(--ink)"><text x="92" y="66">a₂</text><text x="200" y="50">a₃</text><text x="140" y="112" fill="var(--accent)">ρ = khoảng cách vai → p</text>
       <text x="22" y="114">vai</text><text x="140" y="24">khuỷu</text><text x="248" y="84">p</text><text x="66" y="140">d₁</text></g>
     </svg>
-    <figcaption>Định lý cos trong tam giác vai, khuỷu, đầu tay cho ra c₃.</figcaption>
+    <figcaption>Nhìn trong mặt phẳng thẳng đứng chứa cánh tay: đây là tay phẳng 2 khâu gốc ở vai. Định lý cos trong tam giác vai, khuỷu, đầu tay cho ra c₃.</figcaption>
   </figure>
-  <p>Đặt p′_z = p_z − d₁ và r = √(pₓ² + p_y²):</p>
-  <ol>
-    <li><span class="eqi">c₃ = (pₓ² + p_y² + p′_z² − a₂² − a₃²) / (2a₂a₃)</span>, <span class="eqi">θ₃ = atan2(±√(1 − c₃²), c₃)</span></li>
-    <li><span class="eqi">θ₁ = atan2(p_y, pₓ)</span> hoặc <span class="eqi">θ₁ + 180°</span></li>
-    <li>Chiêu B: <span class="eqi">θ₂ = atan2(p′_z, ±r) − atan2(a₃s₃, a₂ + a₃c₃)</span></li>
-  </ol>
-  <p>Hai dấu ± cho <b>4 nghiệm</b>: vai hướng tới/quay ngược × khuỷu trên/dưới. Luôn thay nghiệm vào động học thuận để kiểm tra.</p>
+  <p>Từ Chương 4: p = (r·c₁; r·s₁; d₁ + h) với r = a₂c₂ + a₃c₂₃ và h = a₂s₂ + a₃s₂₃. Đặt <span class="eqi">p′_z = p_z − d₁</span> (hạ gốc về vai). Slide làm với d₁ = 0, robot bên cạnh chỉ cần thay p_z bằng p′_z.</p>
+  <h4>Bước 1: tìm θ₃ (góc khuỷu)</h4>
+  <p>Bình phương và cộng ba thành phần, θ₁ biến mất (vì c₁² + s₁² = 1):</p>
+  <p class="eq">pₓ² + p_y² + p′_z² = a₂² + a₃² + 2a₂a₃c₃<br>⟹ c₃ = (pₓ² + p_y² + p′_z² − a₂² − a₃²) / (2a₂a₃)<br>⟹ s₃ = ±√(1 − c₃²),  θ₃ = atan2(s₃, c₃)</p>
+  <p>Điều kiện có nghiệm: |c₃| ≤ 1, tức là |a₂ − a₃| ≤ ρ ≤ a₂ + a₃ (đúng như Ví dụ 5.2).</p>
+  <h4>Bước 2: tìm θ₁ (xoay đế)</h4>
+  <p>pₓ = c₁·r và p_y = s₁·r. Mà r = ±√(pₓ² + p_y²), nên:</p>
+  <p class="eq">θ₁ = atan2(p_y, pₓ)   (r &gt; 0: quay mặt về phía điểm)<br>θ₁ = atan2(−p_y, −pₓ) = θ₁ + 180°   (r &lt; 0: quay lưng lại, ngửa ra sau)</p>
+  <p>Nếu pₓ = p_y = 0 (điểm nằm trên trục đứng) thì θ₁ tùy ý: <b>vô số nghiệm</b>, đó là kỳ dị vai (Chương 6).</p>
+  <h4>Bước 3: tìm θ₂ (vai)</h4>
+  <p>Trong mặt phẳng cánh tay: r = a₂c₂ + a₃c₂₃ và p′_z = a₂s₂ + a₃s₂₃. Khai triển c₂₃, s₂₃ ra được đúng dạng chiêu B với k₁ = a₂ + a₃c₃, k₂ = a₃s₃:</p>
+  <p class="eq">θ₂ = atan2(p′_z, r) − atan2(a₃s₃, a₂ + a₃c₃)</p>
+  <p>Slide viết cùng kết quả dưới dạng c₂ và s₂ (với r = ±√(pₓ² + p_y²)):</p>
+  <p class="eq">c₂ = [r(a₂ + a₃c₃) + p′_z·a₃s₃] / (a₂² + a₃² + 2a₂a₃c₃)<br>s₂ = [p′_z(a₂ + a₃c₃) − r·a₃s₃] / (a₂² + a₃² + 2a₂a₃c₃),   θ₂ = atan2(s₂, c₂)</p>
+  <p><b>Tổng kết:</b> 2 cách chọn θ₁ × 2 dấu của s₃ = <b>4 nghiệm</b>: vai hướng tới / quay ngược × khuỷu trên / khuỷu dưới. Luôn thay nghiệm vào động học thuận để kiểm tra.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 5.4: Giải đủ 4 nghiệm cho p = (0,3; 0,2; 0,5)</p>
+    <ol>
+      <li>p′_z = 0,5 − 0,3 = 0,2. r = √(0,09 + 0,04) = 0,3606. ρ = √(0,13 + 0,04) = 0,412 (nằm trong [0,1; 0,7] nên có nghiệm).</li>
+      <li>c₃ = (0,09 + 0,04 + 0,04 − 0,16 − 0,09) / (2·0,4·0,3) = −0,08 / 0,24 = <b>−0,3333</b>. s₃ = ±0,9428. θ₃ = <b>±109,47°</b>.</li>
+      <li>θ₁ = atan2(0,2; 0,3) = <b>33,69°</b> hoặc 33,69° − 180° = <b>−146,31°</b>.</li>
+      <li>atan2(a₃s₃, a₂ + a₃c₃) = atan2(±0,2828; 0,3) = ±43,31°.<br>Vai hướng tới: atan2(p′_z, r) = atan2(0,2; 0,3606) = 29,02°.<br>Vai quay ngược: atan2(0,2; −0,3606) = 150,98°.</li>
+      <li>θ₂ = (29,02° hoặc 150,98°) − (±43,31°): 29,02 − 43,31 = −14,30°; 29,02 + 43,31 = 72,33°; 150,98 − 43,31 = 107,67°; 150,98 + 43,31 = 194,30° ≡ −165,70°.</li>
+    </ol>
+    <div class="tbl"><table>
+      <tr><th>#</th><th>θ₁</th><th>θ₂</th><th>θ₃</th><th>Vai · khuỷu</th></tr>
+      <tr><td>1</td><td>33,69°</td><td>−14,30°</td><td>109,47°</td><td>tới · dưới</td></tr>
+      <tr><td>2</td><td>33,69°</td><td>72,33°</td><td>−109,47°</td><td>tới · trên</td></tr>
+      <tr><td>3</td><td>−146,31°</td><td>107,67°</td><td>109,47°</td><td>ngược · trên</td></tr>
+      <tr><td>4</td><td>−146,31°</td><td>−165,70°</td><td>−109,47°</td><td>ngược · dưới</td></tr>
+    </table></div>
+    <p>Kiểm tra nghiệm 2 bằng động học thuận: θ₂₃ = 72,33° − 109,47° = −37,14°. r = 0,4·cos72,33° + 0,3·cos(−37,14°) = 0,1214 + 0,2392 = 0,3606 ✓. h = 0,4·sin72,33° + 0,3·sin(−37,14°) = 0,3811 − 0,1811 = 0,2 ✓. Bấm nút đầu tiên dưới đây, bảng bên cạnh cho đúng 4 nghiệm này.</p>
+  </div>
+  <div class="ex"><p class="ex-t">Ví dụ 5.5: Điểm p = (0,5; 0; 0,3) ngang vai</p>
+    <p>p′_z = 0, r = 0,5, ρ = 0,5. c₃ = (0,25 − 0,25)/0,24 = 0 nên θ₃ = ±90°: cánh tay và cẳng tay vuông góc (tam giác 0,3-0,4-0,5 là tam giác vuông!). θ₁ = 0°, θ₂ = 0° − atan2(±0,3; 0,4) = ∓36,87°.</p>
+  </div>
   <div class="tries">
-    <button class="try" data-ik="0.3,0.2,0.5">▶ Thử: p = (0,3; 0,2; 0,5)</button>
-    <button class="try" data-ik="0.5,0,0.3">▶ Thử: p = (0,5; 0; 0,3)</button>
+    <button class="try" data-ik="0.3,0.2,0.5">▶ Thử Ví dụ 5.4: p = (0,3; 0,2; 0,5)</button>
+    <button class="try" data-ik="0.5,0,0.3">▶ Thử Ví dụ 5.5: p = (0,5; 0; 0,3)</button>
     <button class="try" data-ik="1,1,1">▶ Thử điểm ngoài vùng làm việc (1; 1; 1)</button>
   </div>
 
-  <h3>5.4 Robot 6 bậc: tách cổ tay</h3>
-  <p>Robot 6 bậc = tay dạng người + cổ tay cầu (3 trục cắt nhau tại W). Tính tâm cổ tay p_W = p − d₆·a, giải θ₁, θ₂, θ₃ như trên với p_W, rồi tính ³R₆ = (⁰R₃)ᵀ·R và giải θ₄, θ₅, θ₆ bằng góc Euler.</p>
+  <h3>5.8 Robot 6 bậc: tách cổ tay</h3>
+  <figure class="fig pic"><img src="img/c5-tach-co-tay.webp" width="900" height="457" alt="Tách robot 6 bậc thành cánh tay và cổ tay"><figcaption>3 khớp đầu (bất kỳ kiểu RRR, RRP, PPP…) đưa tâm cổ tay W tới đúng chỗ. Cổ tay cầu (khớp 4, 5, 6) xoay dụng cụ về đúng hướng. O₆ = p, z₆ = a.</figcaption></figure>
+  <p>Bài toán 6 ẩn khó, nhưng nếu robot có cổ tay cầu thì <b>tách được thành hai bài 3 ẩn</b>: bài vị trí và bài hướng. Đầu vào: p_e (gốc O₆) và R = [n_e s_e a_e].</p>
+  <ol>
+    <li><b>Tìm tâm cổ tay:</b> <span class="eqi">p_W = p_e − d₆·a_e</span> (lùi từ đầu tay một đoạn d₆ ngược hướng tiếp cận a).</li>
+    <li><b>Giải θ₁, θ₂, θ₃</b> cho cánh tay với điểm đích p_W (như mục 5.7).</li>
+    <li><b>Tính ⁰R₃(θ₁, θ₂, θ₃)</b> bằng động học thuận.</li>
+    <li><b>Tính phần hướng còn thiếu:</b> <span class="eqi">³R₆ = (⁰R₃)ᵀ · R</span> (nghịch đảo ma trận quay = chuyển vị).</li>
+    <li><b>Giải θ₄, θ₅, θ₆</b> từ ³R₆ (mục 5.9).</li>
+  </ol>
+  <p>Vì sao làm được? Ba trục cổ tay cắt nhau tại W, nên quay θ₄, θ₅, θ₆ không làm W di chuyển: vị trí W chỉ phụ thuộc 3 khớp đầu.</p>
+
+  <h3>5.9 Cổ tay cầu</h3>
+  <figure class="fig pic"><img src="img/c4-co-tay.webp" width="658" height="364" alt="Cổ tay cầu"><figcaption>Bảng D-H cổ tay: α₄ = −90°, α₅ = 90°, d₆ (xem mục 4.11).</figcaption></figure>
+  <p>Cho ³R₆ = [³n ³s ³a]. So với ³T₆ ở Chương 4: cột 3 là ³a = (c₄s₅; s₄s₅; c₅), hàng 3 là (−s₅c₆; s₅s₆; c₅). Đọc ra:</p>
+  <div class="two">
+    <div class="box"><b>Nghiệm θ₅ ∈ (0, π)</b> (s₅ &gt; 0)<br>
+      <span class="eqi">θ₄ = atan2(³a_y, ³aₓ)</span><br>
+      <span class="eqi">θ₅ = atan2(√(³aₓ² + ³a_y²), ³a_z)</span><br>
+      <span class="eqi">θ₆ = atan2(³s_z, −³n_z)</span></div>
+    <div class="box"><b>Nghiệm θ₅ ∈ (−π, 0)</b> (s₅ &lt; 0)<br>
+      <span class="eqi">θ₄ = atan2(−³a_y, −³aₓ)</span><br>
+      <span class="eqi">θ₅ = atan2(−√(³aₓ² + ³a_y²), ³a_z)</span><br>
+      <span class="eqi">θ₆ = atan2(−³s_z, ³n_z)</span></div>
+  </div>
+  <p>Đây chính là cách giải góc Euler ZYZ ở Chương 3. Khi s₅ = 0 (θ₅ = 0) thì trục khớp 4 và 6 thẳng hàng, chỉ tìm được tổng θ₄ + θ₆: đó là <b>kỳ dị cổ tay</b>.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 5.6: Giải ngược cổ tay</p>
+    <p>Cho ³R₆ (tạo từ θ₄ = 30°, θ₅ = 45°, θ₆ = 60°, nhưng giả sử ta chưa biết):</p>
+    <div class="m" data-lbl="³R₆" data-m="−0.127,−0.780,0.612;0.927,0.127,0.354;−0.354,0.612,0.707"></div>
+    <ol>
+      <li>θ₄ = atan2(0,354; 0,612) = <b>30°</b></li>
+      <li>θ₅ = atan2(√(0,612² + 0,354²); 0,707) = atan2(0,707; 0,707) = <b>45°</b></li>
+      <li>θ₆ = atan2(0,612; −(−0,354)) = atan2(0,612; 0,354) = <b>60°</b></li>
+    </ol>
+    <p>Nghiệm thứ hai: (θ₄, θ₅, θ₆) = (−150°, −45°, −120°). Kiểm tra: cùng cho một ma trận ³R₆. Kết hợp với 4 nghiệm cánh tay, robot 6 bậc có tới <b>8 nghiệm</b>.</p>
+  </div>
 
   <div class="quiz"><b>Tự kiểm tra</b>
-    <details><summary>Với d₁ = 0,3, a₂ = 0,4, a₃ = 0,3, điểm nào trên trục x với tới được?</summary>Khoảng cách vai → p phải trong [0,1; 0,7] m. Với p = (x; 0; 0,3) thì 0,1 ≤ |x| ≤ 0,7.</details>
-    <details><summary>Vì sao không dùng θ₃ = arccos(c₃)?</summary>arccos chỉ cho nghiệm dương, mất nghiệm khuỷu còn lại. Dùng atan2(±s₃, c₃) để lấy đủ cả hai.</details>
+    <details><summary>Với d₁ = 0,3, a₂ = 0,4, a₃ = 0,3, điểm nào trên trục x với tới được?</summary>Khoảng cách vai → p phải trong [0,1; 0,7] m. Với p = (x; 0; 0,3) thì ρ = |x| nên 0,1 ≤ |x| ≤ 0,7.</details>
+    <details><summary>Vì sao không dùng θ₃ = arccos(c₃)?</summary>arccos chỉ cho nghiệm trong [0°, 180°], mất nghiệm khuỷu còn lại. Dùng atan2(±s₃, c₃) để lấy đủ cả hai.</details>
+    <details><summary>c₃ tính ra bằng 1,2 thì nghĩa là gì?</summary>|c₃| &gt; 1 nên không có góc nào thỏa: điểm nằm ngoài vùng làm việc (quá xa vai). Robot không với tới.</details>
+    <details><summary>Điểm p = (0; 0; 0,8) có bao nhiêu nghiệm?</summary>pₓ = p_y = 0 nên θ₁ tùy ý: vô số nghiệm (kỳ dị vai). Với mỗi θ₁, giải θ₂, θ₃ như bình thường.</details>
+    <details><summary>Tay phẳng 3 khâu: vì sao phải cho thêm φ?</summary>Có 3 ẩn mà chỉ cho (pₓ, p_y) là 2 phương trình: thừa 1 bậc tự do, vô số nghiệm. Cho thêm φ thì đủ 3 phương trình, còn 2 nghiệm (2 kiểu khuỷu).</details>
+    <details><summary>Robot 6 bậc có cổ tay cầu: bước đầu tiên là gì?</summary>Tính tâm cổ tay p_W = p_e − d₆·a_e, rồi giải 3 khớp đầu cho p_W như một bài toán vị trí.</details>
   </div>
 </article>
 
 <article class="lesson" id="les6" hidden>
   <p class="eyebrow">Chương 6 · có robot bên cạnh</p>
   <h2>Động học vi phân</h2>
-  <p class="lead">Quan hệ giữa vận tốc khớp q̇ và vận tốc đầu tay (vận tốc dài ṗ và vận tốc góc ω). Mũi tên tím trên mô hình 3D là vận tốc đầu tay.</p>
+  <p class="lead">Chương 4 hỏi "đầu tay ở đâu", chương này hỏi "đầu tay <b>chạy nhanh cỡ nào, theo hướng nào</b>" khi các khớp quay với tốc độ q̇. Câu trả lời là một ma trận tên <b>Jacobian</b>. Từ Jacobian ta tìm được những tư thế "nguy hiểm" gọi là kỳ dị. Mũi tên tím trên mô hình 3D là vận tốc đầu tay.</p>
 
-  <h3>6.1 Jacobian hình học</h3>
-  <p class="eq">ṗ_e = J_P(q)·q̇<br>ω_e = J_O(q)·q̇<br>hay<br>v_e = [ṗ_e; ω_e] = J(q)·q̇</p>
-  <p>J phụ thuộc tư thế q. Jacobian dùng để tìm điểm kỳ dị, phân tích thừa bậc tự do, xây thuật toán động học ngược, và liên hệ lực ở đầu tay với mômen ở khớp (tĩnh học).</p>
+  <div class="note"><b>Lộ trình chương:</b> 6.1 bài toán → 6.2 trực giác với 1 khâu → 6.3 Jacobian hình học → 6.4 cột của J cho khớp tịnh tiến và khớp quay → 6.5 quy trình tính J → 6.6 tay phẳng 3 khâu → 6.7 tay dạng người → 6.8 điểm kỳ dị → 6.9 tách kỳ dị → 6.10 elipxoit vận tốc.</div>
 
-  <h3>6.2 Cột thứ i của J</h3>
-  <div class="two">
-    <div class="box"><b>Khớp quay</b><br><span class="eqi">J_Pi = z<sub>i−1</sub> × (p_E − p<sub>i−1</sub>)</span><br><span class="eqi">J_Oi = z<sub>i−1</sub></span></div>
-    <div class="box"><b>Khớp tịnh tiến</b><br><span class="eqi">J_Pi = z<sub>i−1</sub></span><br><span class="eqi">J_Oi = 0</span></div>
+  <h3>6.1 Bài toán động học vi phân</h3>
+  <p>"Tìm quan hệ giữa <b>vận tốc khớp</b> và <b>vận tốc dài, vận tốc góc</b> của đầu tay." Quan hệ này là một ma trận phụ thuộc tư thế của robot, gọi là <b>Jacobian hình học</b>.</p>
+  <p>Jacobian dùng để:</p>
+  <ul>
+    <li>Tìm <b>điểm kỳ dị</b> (mục 6.8).</li>
+    <li>Phân tích robot <b>thừa bậc tự do</b>.</li>
+    <li>Xây <b>thuật toán động học ngược dạng số</b> (cách giải lặp ở Chương 5).</li>
+    <li>Liên hệ <b>lực</b> ở đầu tay với <b>mômen</b> ở khớp (tĩnh học: τ = Jᵀ·F), viết phương trình động lực học, thiết kế bộ điều khiển.</li>
+    <li>Vẽ <b>elipxoit vận tốc</b> và elipxoit lực (mục 6.10).</li>
+  </ul>
+
+  <h3>6.2 Trực giác: một khâu quay</h3>
+  <p>Một thanh dài L quay quanh trục z với tốc độ góc θ̇. Đầu thanh chuyển động tròn, vận tốc <b>vuông góc với thanh</b> và có độ lớn L·θ̇. Viết gọn bằng tích có hướng:</p>
+  <p class="eq">v = ω × r = (θ̇·z) × r = (z × r)·θ̇</p>
+  <div class="ex"><p class="ex-t">Ví dụ 6.1: Thanh 0,5 m quay 2 rad/s</p>
+    <p>Đầu thanh chạy với tốc độ 0,5 × 2 = <b>1 m/s</b>, theo hướng tiếp tuyến với đường tròn. Nếu thanh đang nằm dọc trục x (r = (0,5; 0; 0)) thì z × r = (0; 0,5; 0), vận tốc v = (0; 1; 0) m/s: hướng thẳng theo trục y.</p>
   </div>
-  <p>Mọi vectơ phải biểu diễn trong cùng một hệ, thường là hệ đế {0}. z<sub>i−1</sub> là cột 3 và p<sub>i−1</sub> là cột 4 của ⁰T<sub>i−1</sub>.</p>
+  <p>Robot nhiều khớp: mỗi khớp đóng góp một phần vận tốc như vậy, và <b>vận tốc đầu tay là tổng các phần đóng góp</b>. Jacobian chỉ là cách xếp các phần đóng góp đó thành các cột của một ma trận.</p>
 
-  <h3>6.3 Jacobian tay dạng người</h3>
+  <h3>6.3 Jacobian hình học</h3>
+  <p>Động học thuận cho T_e(q) = [R_e(q) p_e(q); 0ᵀ 1]. Vận tốc dài ṗ_e và vận tốc góc ω_e của đầu tay phụ thuộc <b>tuyến tính</b> vào q̇:</p>
+  <p class="eq">ṗ_e = J_P(q)·q̇<br>ω_e = J_O(q)·q̇<br>gộp lại:  v_e = [ṗ_e; ω_e] = J(q)·q̇,   J = [J_P; J_O]</p>
+  <div class="tbl"><table>
+    <tr><th>Ký hiệu</th><th>Kích thước</th><th>Ý nghĩa</th></tr>
+    <tr><td>q̇</td><td>n × 1</td><td>vận tốc n khớp (rad/s hoặc m/s)</td></tr>
+    <tr><td>J_P</td><td>3 × n</td><td>phần vận tốc dài (P = position)</td></tr>
+    <tr><td>J_O</td><td>3 × n</td><td>phần vận tốc góc (O = orientation)</td></tr>
+    <tr><td>J</td><td>6 × n</td><td>Jacobian hình học đầy đủ</td></tr>
+  </table></div>
+  <p><b>Ý nghĩa cột i:</b> cột thứ i của J là vận tốc đầu tay khi <b>chỉ khớp i quay với tốc độ 1</b>, các khớp khác đứng yên. J phụ thuộc tư thế q: cùng một tốc độ khớp, ở tư thế khác thì đầu tay chạy khác.</p>
+
+  <h3>6.4 Cột thứ i của J</h3>
+  <div class="pics">
+    <figure><img src="img/c6-tinh-tien.webp" width="900" height="493" alt="Khớp tịnh tiến"><figcaption>Khớp tịnh tiến: khâu i trượt dọc z<sub>i−1</sub>, mọi điểm phía sau chạy cùng vận tốc d<sub>i</sub>̇·z<sub>i−1</sub>, hướng không đổi.</figcaption></figure>
+    <figure><img src="img/c6-quay.webp" width="900" height="526" alt="Khớp quay"><figcaption>Khớp quay: phần phía sau quay quanh trục z<sub>i−1</sub> đi qua p<sub>i−1</sub>, đầu tay chạy theo z<sub>i−1</sub> × p<sub>i−1,E</sub>.</figcaption></figure>
+  </div>
+  <div class="two">
+    <div class="box"><b>Khớp tịnh tiến</b><br><span class="eqi">J_Pi = z<sub>i−1</sub></span><br><span class="eqi">J_Oi = 0</span><br>Trượt không làm đầu tay quay.</div>
+    <div class="box"><b>Khớp quay</b><br><span class="eqi">J_Pi = z<sub>i−1</sub> × (p_E − p<sub>i−1</sub>)</span><br><span class="eqi">J_Oi = z<sub>i−1</sub></span><br>Giống hệt Ví dụ 6.1, với r là vectơ từ trục khớp tới đầu tay.</div>
+  </div>
+  <p><b>Quy tắc vàng:</b> mọi vectơ phải biểu diễn trong <b>cùng một hệ</b>, thường là hệ đế {0}.</p>
+  <h4>Ôn tích có hướng</h4>
+  <figure class="fig pic sm"><img src="img/c6-tich-co-huong.webp" width="383" height="149" alt="Tích có hướng bằng ma trận đối xứng lệch"><figcaption>Tích có hướng u × p viết được thành ma trận đối xứng lệch S(u) nhân p.</figcaption></figure>
+  <p>Mẹo nhanh cho trường hợp hay gặp nhất, trục quay thẳng đứng z = (0; 0; 1):</p>
+  <p class="eq">(0; 0; 1) × (x; y; z) = (−y; x; 0)</p>
+  <div class="ex"><p class="ex-t">Ví dụ 6.2: Tính một cột</p>
+    <p>Khớp 1 có z₀ = (0; 0; 1) qua gốc, đầu tay ở p_E = (0,3; 0,4; 0,2). Cột 1 của J_P = z₀ × p_E = (−0,4; 0,3; 0). Độ lớn 0,5 = khoảng cách từ đầu tay tới trục z₀, đúng như "L·θ̇" ở Ví dụ 6.1. Cột 1 của J_O = z₀ = (0; 0; 1).</p>
+  </div>
+
+  <h3>6.5 Quy trình tính Jacobian</h3>
+  <ol>
+    <li>Tính động học thuận và giữ lại <b>mọi</b> ma trận trung gian ⁰T₁, ⁰T₂, …, ⁰Tₙ.</li>
+    <li>Đọc z<sub>i−1</sub> = <b>cột 3</b> của ⁰T<sub>i−1</sub>, p<sub>i−1</sub> = <b>cột 4</b> của ⁰T<sub>i−1</sub> (với ⁰T₀ = I: z₀ = (0; 0; 1), p₀ = (0; 0; 0)).</li>
+    <li>p_E = cột 4 của ⁰Tₙ.</li>
+    <li>Với mỗi khớp, dùng công thức mục 6.4 để ra một cột.</li>
+    <li>Xếp các cột cạnh nhau.</li>
+  </ol>
+
+  <h3>6.6 Jacobian tay phẳng 3 khâu</h3>
+  <figure class="fig pic sm"><img src="img/c4-phang3.webp" width="657" height="703" alt="Tay phẳng 3 khâu"><figcaption>Ba trục khớp đều song song z₀ nên z₀ = z₁ = z₂ = (0; 0; 1).</figcaption></figure>
+  <p>Từ mục 4.7: p₁ = (a₁c₁; a₁s₁; 0), p₂ = (a₁c₁ + a₂c₁₂; a₁s₁ + a₂s₁₂; 0), p_E = (a₁c₁ + a₂c₁₂ + a₃c₁₂₃; a₁s₁ + a₂s₁₂ + a₃s₁₂₃; 0).</p>
+  <p class="eq">J = [ z₀ × (p₃ − p₀)   z₁ × (p₃ − p₁)   z₂ × (p₃ − p₂) ;  z₀   z₁   z₂ ]</p>
+  <p>Dùng mẹo (0; 0; 1) × (x; y; 0) = (−y; x; 0):</p>
+  <div class="scroll"><div class="m" data-lbl="J (6 × 3)" data-m="−a₁s₁ − a₂s₁₂ − a₃s₁₂₃,−a₂s₁₂ − a₃s₁₂₃,−a₃s₁₂₃;a₁c₁ + a₂c₁₂ + a₃c₁₂₃,a₂c₁₂ + a₃c₁₂₃,a₃c₁₂₃;0,0,0;0,0,0;0,0,0;1,1,1"></div></div>
+  <p>Hàng 3, 4, 5 bằng 0: đầu tay không bao giờ chạy theo z, không quay quanh x, y. Chỉ có 3 hàng "sống" (ẋ, ẏ, ω_z), nên thực chất J là ma trận 3 × 3.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 6.3: Tính số tại θ = (30°, 40°, −30°), a = (0,5; 0,4; 0,2)</p>
+    <p>Từ Ví dụ 4.4: p_E = (0,723; 0,754), p₁ = (0,433; 0,250), p₂ = (0,570; 0,626).</p>
+    <ol>
+      <li>Cột 1: p_E − p₀ = (0,723; 0,754) → (−0,754; 0,723)</li>
+      <li>Cột 2: p_E − p₁ = (0,290; 0,504) → (−0,504; 0,290)</li>
+      <li>Cột 3: p_E − p₂ = (0,153; 0,129) → (−0,129; 0,153)</li>
+    </ol>
+    <div class="m" data-lbl="[ẋ; ẏ; ω_z] = J·q̇" data-m="−0.754,−0.504,−0.129;0.723,0.290,0.153;1,1,1"></div>
+    <p>Chỉ quay khớp 1 với 1 rad/s: q̇ = (1; 0; 0) cho v = (−0,754; 0,723) m/s, tốc độ 1,045 m/s = khoảng cách từ gốc tới đầu tay. Chỉ quay khớp 3: tốc độ chỉ 0,2 m/s vì khâu 3 ngắn.</p>
+  </div>
+
+  <h3>6.7 Jacobian tay dạng người (robot bên cạnh)</h3>
+  <p>Đọc từ các ma trận ở Chương 4 (bảng D-H có d₁ = 0,3):</p>
+  <div class="tbl"><table>
+    <tr><th></th><th>z<sub>i−1</sub> (cột 3)</th><th>p<sub>i−1</sub> (cột 4)</th></tr>
+    <tr><td>Khớp 1: ⁰T₀ = I</td><td>z₀ = (0; 0; 1)</td><td>p₀ = (0; 0; 0)</td></tr>
+    <tr><td>Khớp 2: ⁰T₁</td><td>z₁ = (s₁; −c₁; 0)</td><td>p₁ = (0; 0; d₁)</td></tr>
+    <tr><td>Khớp 3: ⁰T₂</td><td>z₂ = (s₁; −c₁; 0)</td><td>p₂ = (a₂c₁c₂; a₂s₁c₂; d₁ + a₂s₂)</td></tr>
+  </table></div>
+  <p>z₁ = z₂ vì trục vai và trục khuỷu song song. Tính ba tích có hướng (d₁ tự triệt tiêu vì chỉ hiệu p_E − pᵢ xuất hiện):</p>
   <div class="scroll"><div class="m" data-lbl="J_P (3 hàng đầu của J)" data-m="−s₁(a₂c₂ + a₃c₂₃),−c₁(a₂s₂ + a₃s₂₃),−a₃c₁s₂₃;c₁(a₂c₂ + a₃c₂₃),−s₁(a₂s₂ + a₃s₂₃),−a₃s₁s₂₃;0,a₂c₂ + a₃c₂₃,a₃c₂₃"></div></div>
-  <p>J_O = [z₀ z₁ z₂] = [(0; 0; 1)  (s₁; −c₁; 0)  (s₁; −c₁; 0)]. Tay phẳng 2 khâu: det J = a₁a₂·s₂.</p>
+  <div class="m" data-lbl="J_O = [z₀ z₁ z₂]" data-m="0,s₁,s₁;0,−c₁,−c₁;1,0,0"></div>
+  <p><b>Hiểu bằng hình:</b> cột 1 (xoay đế) luôn nằm ngang và vuông góc với tầm vươn, độ lớn bằng tầm vươn r. Cột 2, 3 nằm trong mặt phẳng cánh tay.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 6.4: Tính số tại θ = (30°, 45°, −60°)</p>
+    <p>Từ Ví dụ 4.5: r = a₂c₂ + a₃c₂₃ = 0,5726, h = a₂s₂ + a₃s₂₃ = 0,2052, s₂₃ = −0,2588, c₂₃ = 0,9659.</p>
+    <div class="m" data-lbl="J_P(30°, 45°, −60°)" data-m="−0.286,−0.178,0.067;0.496,−0.103,0.039;0,0.573,0.290"></div>
+    <p>Chỉ quay vai θ̇₂ = 1 rad/s: ṗ = cột 2 = (−0,178; −0,103; 0,573) m/s. Đầu tay đi lên là chính và hơi lùi vào phía trục đứng.</p>
+    <p>det J_P = 0,0595 ≠ 0 nên tư thế này không kỳ dị.</p>
+  </div>
+  <div class="tries"><button class="try" data-q="30,45,-60">▶ Thử: đưa robot tới θ = (30°, 45°, −60°) rồi xem ma trận J bên cạnh</button></div>
 
-  <h3>6.4 Điểm kỳ dị</h3>
-  <p>Là tư thế mà Jacobian <b>mất hạng</b>. Khi đó đầu tay không đi được theo một số hướng, động học ngược có thể vô số nghiệm, và gần kỳ dị thì vận tốc đầu tay nhỏ cũng đòi hỏi vận tốc khớp rất lớn.</p>
+  <h3>6.8 Điểm kỳ dị</h3>
+  <p><b>Định nghĩa:</b> những tư thế mà Jacobian <b>mất hạng</b>. Với J vuông thì đơn giản là <b>det J = 0</b>.</p>
+  <p><b>Vì sao phải tìm?</b></p>
+  <ul>
+    <li>Ở kỳ dị, robot <b>mất khả năng di chuyển theo một số hướng</b>: không thể bắt đầu tay chạy theo hướng tùy ý.</li>
+    <li>Ở kỳ dị, động học ngược có thể có <b>vô số nghiệm</b>.</li>
+    <li>Gần kỳ dị, vận tốc đầu tay nhỏ cũng đòi hỏi <b>vận tốc khớp rất lớn</b>, nguy hiểm cho động cơ.</li>
+  </ul>
+  <p><b>Hai loại:</b></p>
+  <ul>
+    <li><b>Kỳ dị biên</b>: khi tay duỗi thẳng hết cỡ hoặc gập sát. Nằm ở mép vùng làm việc, dễ tránh (đừng cho robot tới sát mép).</li>
+    <li><b>Kỳ dị trong</b>: nằm bên trong vùng làm việc, thường do hai trục chuyển động thẳng hàng. Nguy hiểm hơn vì quỹ đạo lập trình có thể đi ngang qua.</li>
+  </ul>
+  <h4>Tay phẳng 2 khâu</h4>
+  <figure class="fig pic sm"><img src="img/c6-2r.webp" width="584" height="391" alt="Tay 2 khâu duỗi thẳng"><figcaption>θ₂ = 0: hai khâu thẳng hàng, đầu tay không thể chạy dọc theo cánh tay.</figcaption></figure>
+  <div class="two">
+    <div class="m" data-lbl="J" data-m="−a₁s₁ − a₂s₁₂,−a₂s₁₂;a₁c₁ + a₂c₁₂,a₂c₁₂"></div>
+    <div class="box"><span class="eqi">det J = a₁a₂s₂</span><br><br>det J = 0 ⇔ <b>θ₂ = 0</b> (duỗi thẳng) hoặc <b>θ₂ = π</b> (gập sát). Cả hai đều là kỳ dị biên.</div>
+  </div>
+  <div class="ex"><p class="ex-t">Ví dụ 6.5: Gần kỳ dị, khớp phải quay rất nhanh</p>
+    <p>a₁ = a₂ = 0,5 m, θ₁ = 0. Muốn đầu tay chạy 0,1 m/s dọc trục x (dọc theo cánh tay). Giải q̇ = J⁻¹·v:</p>
+    <div class="tbl"><table>
+      <tr><th>θ₂</th><th>det J</th><th>θ̇₁</th><th>θ̇₂</th></tr>
+      <tr><td>90°</td><td>0,250</td><td>0°/s</td><td>−11,5°/s</td></tr>
+      <tr><td>10°</td><td>0,043</td><td>65°/s</td><td>−131°/s</td></tr>
+      <tr><td>2°</td><td>0,0087</td><td>328°/s</td><td>−656°/s</td></tr>
+      <tr><td>0°</td><td>0</td><td colspan="2">không giải được</td></tr>
+    </table></div>
+    <p>Cùng một yêu cầu nhỏ 0,1 m/s, càng gần duỗi thẳng thì khớp càng phải quay điên cuồng. Đó là lý do robot thật luôn né kỳ dị.</p>
+  </div>
+  <h4>Tay dạng người</h4>
   <p class="eq">det(J_P) = −a₂a₃·s₃·(a₂c₂ + a₃c₂₃)</p>
   <ul>
-    <li><b>Kỳ dị khuỷu</b> (kỳ dị biên): s₃ = 0, cánh tay duỗi thẳng hoặc gập sát.</li>
-    <li><b>Kỳ dị vai</b> (kỳ dị trong): a₂c₂ + a₃c₂₃ = 0, đầu tay nằm trên trục z₀ nên xoay θ₁ không làm đầu tay di chuyển.</li>
+    <li><b>Kỳ dị khuỷu</b> (kỳ dị biên): s₃ = 0, tức θ₃ = 0 (duỗi thẳng) hoặc θ₃ = 180° (gập sát). Giống tay phẳng 2 khâu.</li>
+    <li><b>Kỳ dị vai</b> (kỳ dị trong): a₂c₂ + a₃c₂₃ = 0, tức tầm vươn r = 0: đầu tay nằm trên trục z₀. Xoay θ₁ không làm đầu tay di chuyển (cột 1 của J_P bằng 0), và động học ngược có vô số θ₁ (đúng như mục 5.7).</li>
   </ul>
   <div class="tries">
     <button class="try" data-act="elbow">▶ Tới kỳ dị khuỷu (θ₃ = 0)</button>
     <button class="try" data-act="shoulder">▶ Tới kỳ dị vai</button>
     <button class="try" data-act="normal">▶ Tư thế bình thường</button>
   </div>
-  <p>Robot có cổ tay cầu thì tách kỳ dị thành hai phần: kỳ dị của cánh tay (3 khớp đầu) và kỳ dị của cổ tay.</p>
+  <div class="ex"><p class="ex-t">Ví dụ 6.6: Kiểm tra tư thế home</p>
+    <p>θ = (0°, 0°, 0°): s₃ = 0 nên det J_P = 0. Tư thế home của robot bên cạnh là <b>kỳ dị khuỷu</b>: cánh tay duỗi thẳng, đầu tay không thể chạy ra xa hơn theo trục x₀. Đó là lý do robot thật thường đặt home ở tư thế khuỷu gập.</p>
+  </div>
 
-  <h3>6.5 Elipxoit vận tốc</h3>
-  <p>Cho ‖q̇‖ = 1 thì tập các vận tốc đầu tay v = J_P·q̇ là một elipxoit. Bán trục dài là hướng đầu tay di chuyển dễ nhất. Gần kỳ dị, elipxoit bẹp lại. Độ khéo léo w = |det J_P|.</p>
-  <p>Ở bảng bên cạnh, thử "Cho đầu tay đi thẳng theo v": robot dùng q̇ = J_P⁻¹·v. Khi gần duỗi thẳng, khớp phải quay rất nhanh và chương trình tự dừng.</p>
+  <h3>6.9 Tách kỳ dị cho robot có cổ tay cầu</h3>
+  <p>Jacobian robot 6 bậc là ma trận 6 × 6, tính det trực tiếp rất dài. Với cổ tay cầu, slide tách thành hai bài nhỏ:</p>
+  <ul>
+    <li><b>Kỳ dị cánh tay</b>: do 3 khớp đầu, tính như mục 6.8 (kỳ dị khuỷu, kỳ dị vai).</li>
+    <li><b>Kỳ dị cổ tay</b>: do 3 khớp cổ tay. Xảy ra khi trục khớp 4 và 6 thẳng hàng, tức <b>θ₅ = 0</b> hoặc π (đúng như mục 5.9: chỉ tìm được θ₄ + θ₆).</li>
+  </ul>
+
+  <h3>6.10 Elipxoit vận tốc và điều khiển theo vận tốc</h3>
+  <p>Cho mọi q̇ có ‖q̇‖ = 1 (cùng một "công suất" khớp) thì tập các vận tốc đầu tay v = J_P·q̇ là một <b>elipxoit</b>.</p>
+  <ul>
+    <li>Bán trục <b>dài</b>: hướng đầu tay di chuyển <b>dễ nhất</b> (nhanh nhất với cùng tốc độ khớp).</li>
+    <li>Bán trục <b>ngắn</b>: hướng khó di chuyển.</li>
+    <li>Gần kỳ dị, elipxoit <b>bẹp lại</b> (một bán trục tiến về 0).</li>
+    <li><b>Độ khéo léo</b> w = |det J_P|: tỉ lệ với thể tích elipxoit, càng lớn càng xa kỳ dị.</li>
+  </ul>
+  <p>Ở bảng bên cạnh, thử "Cho đầu tay đi thẳng theo v": robot dùng q̇ = J_P⁻¹·v ở mỗi bước nhỏ (đây là thuật toán <b>resolved-rate</b>, gốc của cách giải động học ngược dạng số). Khi gần duỗi thẳng, khớp phải quay rất nhanh (giống Ví dụ 6.5) và chương trình tự dừng.</p>
 
   <div class="quiz"><b>Tự kiểm tra</b>
     <details><summary>Ở tư thế home θ = (0°, 0°, 0°), robot có kỳ dị không?</summary>Có. θ₃ = 0 nên s₃ = 0, det(J_P) = 0: kỳ dị khuỷu, cánh tay duỗi thẳng.</details>
-    <details><summary>Ở kỳ dị vai, đầu tay không đi được theo hướng nào?</summary>Đầu tay nằm trên trục z₀ nên xoay θ₁ không làm nó di chuyển. Mất một hướng chuyển động ngang.</details>
+    <details><summary>Ở kỳ dị vai, đầu tay không đi được theo hướng nào?</summary>Đầu tay nằm trên trục z₀ nên xoay θ₁ không làm nó di chuyển. Mất một hướng chuyển động ngang (vuông góc với mặt phẳng cánh tay).</details>
+    <details><summary>Khớp quay có z<sub>i−1</sub> = (0; 0; 1), p<sub>i−1</sub> = (0; 0; 0), đầu tay ở (0,2; 0; 0,5). Cột J_Pi là gì?</summary>z × (p_E − p) = (0; 0; 1) × (0,2; 0; 0,5) = (0; 0,2; 0). Đầu tay chạy theo y với 0,2 m/s mỗi rad/s.</details>
+    <details><summary>Vì sao cột J_Oi của khớp tịnh tiến bằng 0?</summary>Khớp tịnh tiến chỉ trượt, không làm hướng của các khâu phía sau thay đổi, nên không đóng góp vận tốc góc.</details>
+    <details><summary>Tay phẳng 2 khâu a₁ = a₂ = 1 ở θ₂ = 90°. det J bằng bao nhiêu? Có kỳ dị không?</summary>det J = a₁a₂s₂ = 1·1·1 = 1, lớn nhất có thể: xa kỳ dị nhất. θ₂ = 90° là tư thế khéo léo nhất của tay 2 khâu bằng nhau.</details>
+    <details><summary>Jacobian của robot 6 bậc có kích thước bao nhiêu?</summary>6 × 6: 6 hàng (3 vận tốc dài + 3 vận tốc góc) và 6 cột (mỗi khớp một cột).</details>
   </div>
 </article>
 

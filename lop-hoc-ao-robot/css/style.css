@@ -181,6 +181,7 @@ header.top,.chapnav{min-width:0;max-width:100%}
 .chatbox .chatlog{flex:1;max-height:none;min-height:0}
 .chatbox #chips{max-height:72px;overflow-y:auto}
 .asklist{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+.askh{margin:12px 0 0;font:600 12px var(--f-ui);color:var(--accent);letter-spacing:.04em}
 .ask{text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:13px var(--f-ui);padding:6px 10px;border-radius:8px;cursor:pointer}
 .ask:hover{border-color:var(--accent);color:var(--accent)}
 .bub .tries{margin:8px 0 0}

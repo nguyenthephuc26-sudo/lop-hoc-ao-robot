@@ -5,10 +5,10 @@ Sách bài giảng tương tác cho môn Kỹ thuật Robot (bài giảng TS. Ng
 - **Chương 1 – Giới thiệu robot công nghiệp:** định nghĩa, lịch sử, số liệu thị trường, bộ phận tay máy, bậc tự do, không gian làm việc, 5 kiểu cấu hình, robot di động, đọc bảng thông số Motoman GP7. 6 ví dụ.
 - **Chương 2 – Các thành phần của robot:** dòng công suất, bộ truyền (bánh răng, vít me, đai, harmonic drive), tỉ số truyền tối ưu, động cơ khí nén, thủy lực, điện, độ chính xác và độ lặp lại, encoder, cảm biến lực, khoảng cách, thị giác. 11 ví dụ tính.
 - **Chương 3 – Mô tả không gian và các phép biến đổi:** ma trận quay, ánh xạ, ma trận thuần nhất, toán tử, ghép và nghịch đảo, RPY, Euler Z–X′–Z″. 13 ví dụ giải từng bước (gồm 5 ví dụ của slide), hình kéo thả ánh xạ 2D, 5 bài tập slide có lời giải.
-- **Chương 4 – Động học thuận:** bảng D-H, ma trận ⁰A₁, ¹A₂, ²A₃ và ⁰T₃ = ⁰A₁·¹A₂·²A₃, cập nhật ngay khi kéo slider.
-- **Chương 5 – Động học ngược:** nhập điểm đích p, tìm đủ 4 nghiệm (θ₁, θ₂, θ₃), cánh tay chạy tới nghiệm được chọn.
-- **Chương 6 – Động học vi phân:** Jacobian hình học J(q) 6×3, det(J_P), điểm kỳ dị khuỷu và vai, mũi tên vận tốc đầu tay, elipxoit vận tốc, bài toán ngược q̇ = J_P⁻¹·v.
-- **Trợ lý chat (nút tròn ở góc màn hình):** trả lời thẳng 38 câu hỏi hay gặp của chương 1–6, ra lệnh cho cánh tay bằng tiếng Việt. Câu hỏi ngoài danh sách thì tìm trong bài giảng.
+- **Chương 4 – Động học thuận:** khâu, khớp, bốn tham số D-H, quy tắc gán hệ, ma trận D-H, quy trình 6 bước, rồi làm trọn tay phẳng 3 khâu, tay dạng người, SCARA, tay cầu, tay trụ, cổ tay cầu. 7 ví dụ tính số, hình từ slide. Bên phải: ⁰A₁, ¹A₂, ²A₃ và ⁰T₃ cập nhật ngay khi kéo slider.
+- **Chương 5 – Động học ngược:** số nghiệm, vùng làm việc WS₁/WS₂, atan2 và hai "chiêu", tay phẳng 3 khâu (đại số và hình học), tay dạng người 4 nghiệm, tách cổ tay cho robot 6 bậc, giải ngược cổ tay cầu. 6 ví dụ, ghi rõ lỗi in trong slide. Bên phải: nhập điểm đích p, tìm đủ 4 nghiệm, cánh tay chạy tới nghiệm được chọn.
+- **Chương 6 – Động học vi phân:** trực giác v = ω × r, cột Jacobian cho khớp quay và tịnh tiến, quy trình tính J, Jacobian tay phẳng và tay dạng người có tính số, kỳ dị biên và kỳ dị trong, tách kỳ dị cổ tay. 6 ví dụ. Bên phải: Jacobian hình học J(q) 6×3, det(J_P), điểm kỳ dị khuỷu và vai, mũi tên vận tốc đầu tay, elipxoit vận tốc, bài toán ngược q̇ = J_P⁻¹·v.
+- **Trợ lý chat (nút tròn ở góc màn hình):** trả lời thẳng 112 câu hỏi soạn từ slide chương 1–6 (gõ "danh sách câu hỏi" để chọn theo chương), ra lệnh cho cánh tay bằng tiếng Việt. Câu hỏi ngoài danh sách thì tìm trong bài giảng.
 
 ## Cách chạy
 
@@ -22,7 +22,7 @@ Sách bài giảng tương tác cho môn Kỹ thuật Robot (bài giảng TS. Ng
 lop-hoc-ao-robot/
 ├── index.html                    Giao diện: menu chương, nội dung lý thuyết 6 chương, khung 3D, bảng điều khiển, khung chat
 ├── css/style.css                 Màu sắc, bố cục (có giao diện sáng/tối, chạy được trên điện thoại)
-├── img/                          56 hình minh họa chương 1–3, lấy từ slide của thầy (bấm vào hình để phóng to)
+├── img/                          78 hình minh họa chương 1–6, lấy từ slide của thầy (bấm vào hình để phóng to)
 ├── data/corpus.js                Bài giảng chương 1–5 đã cắt thành 235 đoạn (tạo tự động)
 ├── js/
 │   ├── 01-dong-hoc.js            Lõi toán: ma trận D-H Aᵢ, nhân ra ⁰T₃ (Ch.3, Ch.4)
@@ -30,7 +30,7 @@ lop-hoc-ao-robot/
 │   ├── 03-bang-dh-va-ma-tran.js  Bảng D-H, slider, hiển thị ma trận, chuyển động mượt
 │   ├── 04-dong-hoc-nguoc.js      Động học ngược 4 nghiệm (Ch.5)
 │   ├── 05-jacobian.js            Jacobian, điểm kỳ dị, vận tốc, elipxoit (Ch.6)
-│   ├── 06-tro-ly-kien-thuc.js    38 câu hỏi hay gặp và câu trả lời
+│   ├── 06-tro-ly-kien-thuc.js    112 câu hỏi soạn sẵn, chia theo chương
 │   ├── 07-tim-trong-bai-giang.js Tìm kiếm trong bài giảng (thuật toán BM25)
 │   ├── 08-tro-ly-chat.js         Hiểu câu lệnh tiếng Việt, chọn câu trả lời phù hợp
 │   ├── 09-sach-bai-giang.js      Chuyển chương, nút "▶ Thử", nút trợ lý nổi

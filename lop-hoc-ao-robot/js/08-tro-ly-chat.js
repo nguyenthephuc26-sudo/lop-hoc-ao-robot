@@ -5,7 +5,7 @@ const chatLog=document.getElementById('chatLog');
 function say(html,who){const d=document.createElement('div');d.className='bub '+(who||'bot');d.innerHTML=html;chatLog.appendChild(d);chatLog.scrollTop=(who==='me')?chatLog.scrollHeight:Math.max(0,d.offsetTop-chatLog.offsetTop-48);return d;}
 const HELP=`Bạn có thể:<ul>
 <li><b>Hỏi lý thuyết</b> chương 1–6, ví dụ "bậc tự do là gì", "vì sao dùng atan2", "điểm kỳ dị là gì".</li>
-<li><b>Ra lệnh cho robot</b>: "đưa tay tới (0,3; 0,2; 0,5)", "góc 30 45 -60", "khớp 2 thêm 30 độ", "về home", "tính ⁰T₃", "tính jacobian".</li></ul>Gõ <i>"danh sách câu hỏi"</i> để xem các câu mình trả lời được.`;
+<li><b>Ra lệnh cho robot</b>: "đưa tay tới (0,3; 0,2; 0,5)", "góc 30 45 -60", "khớp 2 thêm 30 độ", "về home", "tính ⁰T₃", "tính jacobian".</li></ul>Gõ <i>"danh sách câu hỏi"</i> để xem hơn 100 câu soạn sẵn từ slide, chia theo chương.`;
 
 function chooseNice(){let best=0,bs=-1;sols.forEach((s,i)=>{const sc=(s.floor?0:4)+(s.name.includes('hướng tới')?2:0)+(s.name.includes('trên')?1:0);if(sc>bs){bs=sc;best=i;}});return best;}
 function solList(){return sols.map((s,i)=>`<b>${i+1}.</b> ${s.name}: θ = (${s.q.map(v=>v.toFixed(1)).join('°, ')}°)${s.floor?' <span style="color:var(--bad)">· xuyên sàn</span>':''}`).join('<br>');}
@@ -20,8 +20,11 @@ function faqMatch(raw){const n=norm(raw);
     for(const t of qt)if(FAQ_T[i].has(t))sc+=(t.includes('_')?1.2:0.6)*Math.log(1+KB.length/FAQ_DF.get(t));
     if(sc>bs){bs=sc;best=e;}});
   return bs>=2.5?best:null;}
+const FAQ_CH={1:'Giới thiệu robot',2:'Các thành phần',3:'Các phép biến đổi',4:'Động học thuận',5:'Động học ngược',6:'Động học vi phân'};
+function askList(a){return '<div class="asklist">'+a.map(e=>`<button class="ask" type="button">${e.q}</button>`).join('')+'</div>';}
 function reply(raw){
   const n=norm(raw),v=nums(raw);
+  const exq=KB.find(e=>norm(e.q)===n);if(exq)return exq.a;
   if(/^(xin chao|chao|hello|hi)\b/.test(n))return 'Chào bạn! '+HELP;
   if(/(ban lam duoc gi|huong dan|help|tro giup|cac lenh|dung the nao)/.test(n))return HELP;
   if(/(home|vi tri ban dau|ve 0\b|duoi thang|reset)/.test(n)){if(!LAB_CH[curCh])goChapter(4,{keepScroll:true});animateTo([0,0,0]);return 'Đưa cánh tay về home θ = (0°, 0°, 0°). Cánh tay duỗi thẳng nằm ngang theo trục x₀, đầu tay ở p = (0,7; 0; 0,3).';}
@@ -69,8 +72,12 @@ function reply(raw){
   m=raw.match(/^\s*(tìm|tim|tra cứu|tra cuu|search)\s*:?\s+(.+)/i);
   if(m){const h=searchCorpus(m[2],5);return h.length?`Kết quả tìm “${m[2].replace(/</g,'&lt;')}” trong bài giảng:`+h.map(passageHTML).join(''):'Không tìm thấy đoạn nào khớp trong bài giảng.';}
   // hỏi lý thuyết: trả lời thẳng từ bộ câu hỏi soạn sẵn
-  if(/(danh sach cau hoi|tat ca cau hoi|cau hoi mau|goi y cau hoi)/.test(n))
-    return 'Bạn có thể hỏi các câu sau (bấm để hỏi):<div class="asklist">'+KB.map(e=>`<button class="ask" type="button">${e.q}</button>`).join('')+'</div>';
+  m=n.match(/(cau hoi|danh sach)[^0-9]*chuong\s*([1-6])\b/);
+  if(m){const c=+m[2];return `Câu hỏi Chương ${c}: ${FAQ_CH[c]} (bấm để hỏi):`+askList(KB.filter(e=>e.c===c))+'<div class="asklist"><button class="ask" type="button" data-text="danh sách câu hỏi">← Chọn chương khác</button></div>';}
+  if(/(tat ca cau hoi|xem het cau hoi|toan bo cau hoi)/.test(n))
+    return `Tất cả ${KB.length} câu (bấm để hỏi):`+[1,2,3,4,5,6].map(c=>`<p class="askh">Chương ${c}: ${FAQ_CH[c]}</p>`+askList(KB.filter(e=>e.c===c))).join('');
+  if(/(danh sach cau hoi|cau hoi mau|goi y cau hoi|cac cau hoi)/.test(n))
+    return `Mình có <b>${KB.length} câu hỏi</b> soạn sẵn từ slide. Chọn chương:<div class="asklist">`+[1,2,3,4,5,6].map(c=>`<button class="ask" type="button" data-text="câu hỏi chương ${c}">Chương ${c}: ${FAQ_CH[c]} (${KB.filter(e=>e.c===c).length} câu)</button>`).join('')+'<button class="ask" type="button" data-text="tất cả câu hỏi">Xem hết một lượt</button></div>';
   const fq=faqMatch(raw);
   if(fq)return fq.a;
   const hits=searchCorpus(raw,1);
